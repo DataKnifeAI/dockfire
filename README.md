@@ -34,6 +34,21 @@ LAN-only RFC1918 admin URLs: see `deploy/private/services.local.example.json`.
 | [helmrail](https://github.com/DataKnifeAI/helmrail) | Rust K8s control plane for agent fleets |
 | [coldberth](https://github.com/DataKnifeAI/coldberth) | Local Hermes Agent + vLLM host bootstrap |
 
+## Run locally (no Rancher / cluster)
+
+If the lab is down, run DockFire on any Docker host:
+
+```bash
+./scripts/run-local.sh
+# → http://127.0.0.1:8080/
+```
+
+Or: `docker compose up --build -d`
+
+- Copies `deploy/private/services.local.example.json` on first run if needed
+- Browser **Install** / Add to Home Screen works (PWA + service worker)
+- When `/api/*` is unreachable, the UI falls back to `site/mock/` and cached data
+
 ## Deploy (prd-apps)
 
 ```bash

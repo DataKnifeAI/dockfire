@@ -64,8 +64,8 @@
         },
         {
           "name": "Enphase Envoy",
-          "blurb": "Solar production gateway on the house network (envoy.dataknife.net).",
-          "help": "Official Home Assistant integration: enphase_envoy. Local /info answers without login; live production needs Enphase token or installer password.",
+          "blurb": "One of two solar systems — Enphase gateway on the house network.",
+          "help": "Local /info answers without login. Live production (kW) needs an Enphase token. Second array is SolarEdge (not seen on LAN yet).",
           "url": "https://envoy.dataknife.net/",
           "linkLabel": "Open Envoy",
           "audience": "everyone",
@@ -73,6 +73,18 @@
           "favicon": "assets/icons/enphase-favicon.png",
           "vendor": "assets/icons/enphase-vendor.svg",
           "statusName": "Enphase Envoy"
+        },
+        {
+          "name": "SolarEdge",
+          "blurb": "Second solar system — SolarEdge monitoring (cloud / local gateway when present).",
+          "help": "Not currently visible on the home UniFi LAN from DockFire. Live production needs SolarEdge monitoring login or a local gateway DNS entry.",
+          "url": "https://monitoring.solaredge.com/",
+          "linkLabel": "SolarEdge monitoring",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/enphase-favicon.png",
+          "vendor": "assets/icons/enphase-vendor.svg",
+          "statusName": "SolarEdge"
         },
         {
           "name": "Pool \u00b7 WaterGuru / Hayward",

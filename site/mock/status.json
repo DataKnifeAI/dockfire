@@ -1,0 +1,223 @@
+{
+  "as_of": 1794784552,
+  "counts": {
+    "ok": 15,
+    "warn": 0,
+    "bad": 1,
+    "unknown": 0
+  },
+  "services": [
+    {
+      "name": "Internet (ISP)",
+      "kind": "home",
+      "description": "Outbound internet path.",
+      "admin": "https://one.one.one.one/",
+      "favicon": "assets/icons/internet-favicon.png",
+      "vendor": "assets/icons/internet-vendor.svg",
+      "status": "ok",
+      "detail": "path ok",
+      "latency_ms": 12,
+      "resolved": [
+        "1.1.1.1"
+      ],
+      "host": "1.1.1.1",
+      "port": 443
+    },
+    {
+      "name": "Tesla Energy",
+      "kind": "home",
+      "description": "Powerwall.",
+      "admin": "https://tesla.dataknife.net/",
+      "favicon": "assets/icons/tesla-favicon.png",
+      "vendor": "assets/icons/tesla-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 8,
+      "resolved": [
+        "tesla.dataknife.net"
+      ],
+      "host": "tesla.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Enphase Envoy",
+      "kind": "home",
+      "description": "Solar.",
+      "admin": "https://envoy.dataknife.net/",
+      "favicon": "assets/icons/enphase-favicon.png",
+      "vendor": "assets/icons/enphase-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 6,
+      "host": "envoy.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "OmniLogic",
+      "kind": "home",
+      "description": "Pool.",
+      "admin": "https://github.com/cryptk/haomnilogic-local",
+      "favicon": "assets/icons/pool-favicon.png",
+      "vendor": "assets/icons/pool-vendor.svg",
+      "status": "ok",
+      "detail": "dns ok",
+      "host": "omnilogic.dataknife.net",
+      "port": 10444
+    },
+    {
+      "name": "Lutron",
+      "kind": "home",
+      "description": "Lights.",
+      "admin": "https://lutron.dataknife.net/",
+      "favicon": "assets/icons/lutron-favicon.png",
+      "vendor": "assets/icons/lutron-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 4,
+      "host": "lutron.dataknife.net",
+      "port": 8081
+    },
+    {
+      "name": "SmartThings Hub",
+      "kind": "home",
+      "description": "Hub.",
+      "admin": "https://smartthings.dataknife.net/",
+      "favicon": "assets/icons/smartthings-favicon.png",
+      "vendor": "assets/icons/smartthings-vendor.svg",
+      "status": "bad",
+      "detail": "not answering",
+      "host": "smartthings.dataknife.net",
+      "port": 8081
+    },
+    {
+      "name": "Proxmox",
+      "kind": "compute",
+      "description": "Lab.",
+      "admin": "https://pve.dataknife.net:8006/",
+      "favicon": "assets/icons/proxmox-favicon.png",
+      "vendor": "assets/icons/proxmox-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 2,
+      "host": "pve.dataknife.net",
+      "port": 8006
+    },
+    {
+      "name": "TrueNAS",
+      "kind": "storage",
+      "description": "Storage.",
+      "admin": "https://tn.dataknife.net/",
+      "favicon": "assets/icons/truenas-favicon.png",
+      "vendor": "assets/icons/truenas-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 3,
+      "host": "tn.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Rancher",
+      "kind": "platform",
+      "description": "Clusters.",
+      "admin": "https://rancher.dataknife.net/",
+      "favicon": "assets/icons/rancher-favicon.png",
+      "vendor": "assets/icons/rancher-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 5,
+      "host": "rancher.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Harbor",
+      "kind": "platform",
+      "description": "Images.",
+      "admin": "https://harbor.dataknife.net/",
+      "favicon": "assets/icons/harbor-favicon.png",
+      "vendor": "assets/icons/harbor-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 5,
+      "host": "harbor.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Authentik",
+      "kind": "identity",
+      "description": "Sign-in.",
+      "admin": "https://auth.dataknife.net/",
+      "favicon": "assets/icons/authentik-favicon.png",
+      "vendor": "assets/icons/authentik-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 4,
+      "host": "auth.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Coder",
+      "kind": "work",
+      "description": "Workspaces.",
+      "admin": "https://coder.dataknife.net/",
+      "favicon": "assets/icons/coder-favicon.png",
+      "vendor": "assets/icons/coder-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 5,
+      "host": "coder.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Pulseblade",
+      "kind": "monitor",
+      "description": "Monitor.",
+      "admin": "https://pulseblade.dataknife.net/",
+      "favicon": "assets/icons/pulseblade-favicon.png",
+      "vendor": "assets/icons/pulseblade-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 5,
+      "host": "pulseblade.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "UniFi (LAN)",
+      "kind": "network",
+      "description": "Home gateway.",
+      "admin": "https://unifi.dataknife.net/",
+      "favicon": "assets/icons/ubiquiti-favicon.png",
+      "vendor": "assets/icons/ubiquiti-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 1,
+      "host": "unifi.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "Ranch Gateway",
+      "kind": "remote",
+      "description": "Ranch gateway.",
+      "admin": "https://ranch.dataknife.net/",
+      "favicon": "assets/icons/ubiquiti-favicon.png",
+      "vendor": "assets/icons/ubiquiti-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 55,
+      "host": "ranch.dataknife.net",
+      "port": 443
+    },
+    {
+      "name": "PDU",
+      "kind": "power",
+      "description": "Rack power.",
+      "admin": "#view-infra",
+      "favicon": "assets/icons/apc-favicon.png",
+      "vendor": "assets/icons/apc-vendor.svg",
+      "status": "ok",
+      "detail": "online",
+      "latency_ms": 2,
+      "host": "pdu.dataknife.net",
+      "port": 443
+    }
+  ]
+}

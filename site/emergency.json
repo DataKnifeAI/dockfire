@@ -1,0 +1,42 @@
+{
+  "title": "In an emergency",
+  "lead": "If anyone is hurt or in danger, call 911 first. Then use the contacts below.",
+  "steps": [
+    {
+      "id": "life",
+      "title": "Someone is hurt or unsafe",
+      "action": "Call 911",
+      "phone": "911",
+      "detail": "Stay on the line. Do not wait on other numbers first."
+    },
+    {
+      "id": "gas",
+      "title": "Smell gas or see a downed power line",
+      "action": "Call 911, then PG&E",
+      "phone": "1-800-743-5000",
+      "detail": "Leave the area if it feels unsafe. PG&E emergency: 1-800-743-5000."
+    },
+    {
+      "id": "power",
+      "title": "House power is out",
+      "action": "Check SMUD outages",
+      "phone": "1-888-742-7683",
+      "url": "https://www.smud.org/en/Customer-Support/Outages",
+      "detail": "Powerwall may keep lights on. SMUD: 1-888-742-7683."
+    },
+    {
+      "id": "water",
+      "title": "Water leak or no water",
+      "action": "City Utilities / 311",
+      "phone": "1-916-808-5454",
+      "detail": "Utilities CS 916-808-5454 (business hours). After hours: 311 / 916-264-5011."
+    },
+    {
+      "id": "internet",
+      "title": "Internet is down",
+      "action": "Fidium, then Starlink",
+      "phone": "1-866-356-5864",
+      "detail": "Primary is Fidium (1-866-356-5864). Starlink is the backup path — give it a few minutes to take over."
+    }
+  ]
+}

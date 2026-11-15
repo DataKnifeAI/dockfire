@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DockFire — home &amp; homelab</title>
   <meta name="description" content="DockFire covers home and homelab services and health — find what is available, check status, and jump in to help." />
+  <meta name="theme-color" content="#f0a14a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="DockFire" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/dockfire-favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/icons/dockfire-pwa-192.png" />
   <script>
     (function () {
       try {
@@ -17,7 +23,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=20" />
+  <link rel="stylesheet" href="styles.css?v=23" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -40,10 +46,12 @@
         <button type="button" class="tab" role="tab" aria-selected="false" data-nav="guide">Guide</button>
       </nav>
       <span id="summary" class="summary" aria-live="polite">loading…</span>
+      <button type="button" id="install-app" class="refresh" hidden>Install</button>
       <button type="button" id="theme-toggle" class="refresh" aria-label="Theme">Theme</button>
       <button type="button" id="refresh" class="refresh">Refresh</button>
     </div>
   </header>
+  <p id="offline-banner" class="offline-banner" hidden>Offline / cluster unreachable — showing last saved or local copy.</p>
 
   <main id="top">
     <!-- HOME: high-level -->
@@ -52,127 +60,252 @@
         <div class="home-hero-copy">
           <p class="hero-kicker">DataKnifeAI</p>
           <h1 class="hero-title">DockFire</h1>
-          <p class="hero-sub" id="hero-welcome">High-level home health — solar, power, internet, pool, lab, and automation.</p>
+          <p class="hero-sub" id="hero-welcome">A simple view of the house — power, internet, and everyday services.</p>
           <p class="home-pulse-line" id="pulse-summary">checking…</p>
         </div>
         <div class="home-scene-wrap" aria-label="Home energy scene">
-          <svg class="home-scene" viewBox="0 0 640 360" role="img" aria-labelledby="scene-title">
+          <svg class="home-scene" viewBox="0 0 640 360" role="img" aria-labelledby="scene-title" preserveAspectRatio="xMidYMid meet">
             <title id="scene-title">Home health scene</title>
             <defs>
+              <clipPath id="sceneClip"><rect x="0" y="0" width="640" height="360" rx="4" /></clipPath>
               <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.55" />
+                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.65" />
+                <stop offset="55%" stop-color="var(--atmosphere-1)" stop-opacity="0.18" />
+                <stop offset="100%" stop-color="transparent" />
+              </linearGradient>
+              <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--harbor) 18%, transparent)" />
                 <stop offset="100%" stop-color="transparent" />
               </linearGradient>
               <linearGradient id="roofGrad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stop-color="var(--ember)" />
                 <stop offset="100%" stop-color="var(--ember-deep)" />
               </linearGradient>
+              <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--ink) 22%, var(--panel-solid))" />
+                <stop offset="100%" stop-color="color-mix(in srgb, var(--ink) 38%, var(--panel-solid))" />
+              </linearGradient>
+              <linearGradient id="panelGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--harbor) 55%, #0a1620)" />
+                <stop offset="100%" stop-color="color-mix(in srgb, var(--harbor) 25%, #061018)" />
+              </linearGradient>
+              <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--harbor) 70%, #fff)" />
+                <stop offset="100%" stop-color="color-mix(in srgb, var(--harbor) 45%, #0a3040)" />
+              </linearGradient>
+              <linearGradient id="battGrad" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stop-color="var(--ok)" />
+                <stop offset="100%" stop-color="color-mix(in srgb, var(--ok) 55%, #fff)" />
+              </linearGradient>
+              <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.4" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
             </defs>
-            <rect class="scene-sky" x="0" y="0" width="640" height="360" fill="url(#skyGrad)" />
-            <line class="scene-ground" x1="40" y1="300" x2="600" y2="300" />
+            <g clip-path="url(#sceneClip)">
+              <rect class="scene-sky" x="0" y="0" width="640" height="360" fill="url(#skyGrad)" />
+              <!-- yard / patio plane -->
+              <path class="scene-yard" d="M20 292 C 120 278, 220 286, 320 282 S 520 274, 620 288 L 620 360 L 20 360 Z" fill="url(#groundGrad)" />
+              <path class="scene-ground-line" d="M28 292 C 140 280, 250 288, 360 284 S 520 276, 612 290" />
+              <!-- distant hills -->
+              <path class="scene-hills" d="M0 210 C 80 190, 140 200, 200 188 S 320 175, 400 190 S 520 205, 640 185 L 640 292 L 0 292 Z" />
 
-            <!-- Grid tower -->
-            <g id="scene-grid" class="scene-node" data-domain="internet" transform="translate(70,168)">
-              <line x1="28" y1="0" x2="28" y2="132" class="scene-stroke" />
-              <path d="M8 28 H48 M14 52 H42 M18 76 H38" class="scene-stroke" />
-              <circle class="scene-status" cx="28" cy="-8" r="6" />
-              <text class="scene-label" x="28" y="150" text-anchor="middle">Grid</text>
-              <text class="scene-stat" x="28" y="166" text-anchor="middle" data-stat="internet">—</text>
-            </g>
+              <!-- Energy flow paths (under nodes) -->
+              <g class="scene-flows" fill="none">
+                <path id="flow-solar-house" class="scene-flow" d="M248 112 C 268 128, 292 148, 318 172" />
+                <path id="flow-grid-house" class="scene-flow" d="M118 230 C 180 218, 240 208, 292 202" />
+                <path id="flow-power-house" class="scene-flow" d="M392 228 C 362 218, 342 210, 322 204" />
+                <path id="flow-house-lab" class="scene-flow" d="M372 206 C 430 196, 490 192, 538 204" />
+                <path id="flow-house-pool" class="scene-flow scene-flow-soft" d="M340 230 C 390 248, 430 255, 468 258" />
+              </g>
 
-            <!-- Solar array -->
-            <g id="scene-solar" class="scene-node" data-domain="solar" transform="translate(200,70)">
-              <rect x="0" y="18" width="88" height="48" rx="3" class="scene-panel" />
-              <path d="M0 34 H88 M0 50 H88 M22 18 V66 M44 18 V66 M66 18 V66" class="scene-gridlines" />
-              <line x1="44" y1="66" x2="44" y2="90" class="scene-stroke" />
-              <circle class="scene-status" cx="44" cy="8" r="6" />
-              <text class="scene-label" x="44" y="108" text-anchor="middle">Solar</text>
-              <text class="scene-stat" x="44" y="124" text-anchor="middle" data-stat="solar">—</text>
-            </g>
+              <!-- Grid tower -->
+              <g id="scene-grid" class="scene-node" data-domain="internet" transform="translate(58,145)">
+                <rect x="22" y="118" width="20" height="10" rx="1" class="scene-base" />
+                <path d="M32 10 V118" class="scene-stroke scene-stroke-thick" />
+                <path d="M18 28 L32 18 L46 28 M14 52 L32 40 L50 52 M18 76 L32 64 L46 76 M22 100 L32 90 L42 100" class="scene-stroke" />
+                <circle cx="32" cy="8" r="4" class="scene-insulator" />
+                <path d="M32 8 C 48 -2, 62 6, 70 2" class="scene-wire" />
+                <circle class="scene-status" cx="32" cy="-6" r="6" />
+                <text class="scene-label" x="32" y="142" text-anchor="middle">Grid</text>
+                <text class="scene-stat" x="32" y="156" text-anchor="middle" data-stat="internet">—</text>
+              </g>
 
-            <!-- House -->
-            <g id="scene-house" class="scene-node" data-domain="automation" transform="translate(250,140)">
-              <path d="M20 70 L70 28 L120 70 Z" fill="url(#roofGrad)" class="scene-roof" />
-              <rect x="32" y="70" width="76" height="70" class="scene-fill" />
-              <rect x="48" y="92" width="18" height="22" class="scene-window" />
-              <rect x="78" y="100" width="18" height="40" class="scene-door" />
-              <circle class="scene-status" cx="70" cy="18" r="6" />
-              <text class="scene-label" x="70" y="158" text-anchor="middle">Home</text>
-              <text class="scene-stat" x="70" y="174" text-anchor="middle" data-stat="automation">—</text>
-            </g>
+              <!-- Solar array (tilted roof panels) -->
+              <g id="scene-solar" class="scene-node" data-domain="solar" transform="translate(168,48)">
+                <path d="M8 78 L52 28 L120 28 L76 78 Z" class="scene-panel-frame" />
+                <g class="scene-panel-cells">
+                  <path d="M18 70 L48 36 L62 36 L32 70 Z" fill="url(#panelGrad)" />
+                  <path d="M36 70 L66 36 L80 36 L50 70 Z" fill="url(#panelGrad)" />
+                  <path d="M54 70 L84 36 L98 36 L68 70 Z" fill="url(#panelGrad)" />
+                  <path d="M20 58 H96 M24 48 H100 M28 38 H102" class="scene-gridlines" />
+                  <path d="M48 36 V70 M66 36 V70 M84 36 V70" class="scene-gridlines" />
+                </g>
+                <path d="M64 78 V96" class="scene-stroke" />
+                <path d="M52 96 H76" class="scene-stroke" />
+                <circle class="scene-sun" cx="108" cy="14" r="10" filter="url(#softGlow)" />
+                <circle class="scene-status" cx="64" cy="18" r="6" />
+                <text class="scene-label" x="64" y="118" text-anchor="middle">Solar</text>
+                <text class="scene-stat" x="64" y="132" text-anchor="middle" data-stat="solar">—</text>
+              </g>
 
-            <!-- Powerwall -->
-            <g id="scene-power" class="scene-node" data-domain="power" transform="translate(390,188)">
-              <rect x="0" y="20" width="42" height="72" rx="4" class="scene-fill" />
-              <rect x="10" y="34" width="22" height="36" rx="2" class="scene-battery" />
-              <circle class="scene-status" cx="21" cy="10" r="6" />
-              <text class="scene-label" x="21" y="110" text-anchor="middle">Power</text>
-              <text class="scene-stat" x="21" y="126" text-anchor="middle" data-stat="power">—</text>
-            </g>
+              <!-- House with detailed roof / chimney / porch -->
+              <g id="scene-house" class="scene-node" data-domain="automation" transform="translate(248,118)">
+                <path d="M18 86 L72 22 L126 86 Z" fill="url(#roofGrad)" class="scene-roof" />
+                <path d="M26 86 L72 32 L118 86" class="scene-roof-edge" />
+                <rect x="96" y="34" width="10" height="28" class="scene-chimney" />
+                <rect x="93" y="30" width="16" height="5" rx="1" class="scene-chimney-cap" />
+                <!-- roof solar strip -->
+                <path d="M48 48 L72 28 L96 48 L72 56 Z" class="scene-roof-panel" />
+                <rect x="30" y="86" width="84" height="78" fill="url(#wallGrad)" class="scene-wall" />
+                <rect x="30" y="86" width="84" height="6" class="scene-fascia" />
+                <!-- windows -->
+                <rect x="42" y="104" width="22" height="26" rx="1" class="scene-window" />
+                <path d="M53 104 V130 M42 117 H64" class="scene-window-mullion" />
+                <rect x="80" y="104" width="22" height="26" rx="1" class="scene-window" />
+                <path d="M91 104 V130 M80 117 H102" class="scene-window-mullion" />
+                <!-- door -->
+                <rect x="62" y="128" width="20" height="36" rx="1" class="scene-door" />
+                <circle cx="78" cy="146" r="1.5" class="scene-doorknob" />
+                <!-- porch step -->
+                <rect x="54" y="164" width="36" height="5" class="scene-step" />
+                <circle class="scene-status" cx="72" cy="14" r="6" />
+                <text class="scene-label" x="72" y="186" text-anchor="middle">Home</text>
+                <text class="scene-stat" x="72" y="200" text-anchor="middle" data-stat="automation">—</text>
+              </g>
 
-            <!-- Pool -->
-            <g id="scene-pool" class="scene-node" data-domain="pool" transform="translate(460,230)">
-              <ellipse cx="48" cy="28" rx="48" ry="18" class="scene-water" />
-              <ellipse cx="48" cy="28" rx="34" ry="10" class="scene-water-inner" />
-              <circle class="scene-status" cx="48" cy="0" r="6" />
-              <text class="scene-label" x="48" y="58" text-anchor="middle">Pool</text>
-              <text class="scene-stat" x="48" y="74" text-anchor="middle" data-stat="pool">—</text>
-            </g>
+              <!-- Powerwall -->
+              <g id="scene-power" class="scene-node" data-domain="power" transform="translate(392,168)">
+                <rect x="2" y="24" width="46" height="86" rx="5" class="scene-fill scene-batt-shell" />
+                <rect x="8" y="32" width="34" height="8" rx="1" class="scene-batt-top" />
+                <rect x="12" y="48" width="26" height="48" rx="2" class="scene-battery-well" />
+                <rect x="12" y="64" width="26" height="32" rx="2" fill="url(#battGrad)" class="scene-battery-fill" />
+                <path d="M18 56 H32" class="scene-batt-mark" />
+                <circle class="scene-status" cx="25" cy="12" r="6" />
+                <text class="scene-label" x="25" y="128" text-anchor="middle">Power</text>
+                <text class="scene-stat" x="25" y="142" text-anchor="middle" data-stat="power">—</text>
+              </g>
 
-            <!-- Lab rack -->
-            <g id="scene-lab" class="scene-node" data-domain="lab" transform="translate(540,175)">
-              <rect x="0" y="10" width="52" height="100" rx="3" class="scene-fill" />
-              <rect x="8" y="22" width="36" height="12" class="scene-rack" />
-              <rect x="8" y="42" width="36" height="12" class="scene-rack" />
-              <rect x="8" y="62" width="36" height="12" class="scene-rack" />
-              <rect x="8" y="82" width="36" height="12" class="scene-rack" />
-              <circle class="scene-status" cx="26" cy="0" r="6" />
-              <text class="scene-label" x="26" y="128" text-anchor="middle">Lab</text>
-              <text class="scene-stat" x="26" y="144" text-anchor="middle" data-stat="lab">—</text>
-            </g>
+              <!-- Pool with deck + ripples -->
+              <g id="scene-pool" class="scene-node" data-domain="pool" transform="translate(448,218)">
+                <rect x="4" y="18" width="100" height="48" rx="8" class="scene-deck" />
+                <ellipse cx="54" cy="40" rx="42" ry="16" fill="url(#waterGrad)" class="scene-water" />
+                <ellipse cx="54" cy="40" rx="30" ry="9" class="scene-water-inner" />
+                <path d="M28 40 Q40 34 54 40 T80 40" class="scene-ripple" />
+                <path d="M32 46 Q46 42 54 46 T76 46" class="scene-ripple scene-ripple-soft" />
+                <rect x="12" y="22" width="8" height="6" rx="1" class="scene-deck-tile" />
+                <rect x="88" y="22" width="8" height="6" rx="1" class="scene-deck-tile" />
+                <circle class="scene-status" cx="54" cy="8" r="6" />
+                <text class="scene-label" x="54" y="82" text-anchor="middle">Pool</text>
+                <text class="scene-stat" x="54" y="96" text-anchor="middle" data-stat="pool">—</text>
+              </g>
 
-            <!-- Energy flow paths -->
-            <g class="scene-flows" fill="none">
-              <path id="flow-solar-house" class="scene-flow" d="M244 118 C 260 130, 280 145, 300 170" />
-              <path id="flow-grid-house" class="scene-flow" d="M110 220 C 170 210, 220 200, 280 200" />
-              <path id="flow-power-house" class="scene-flow" d="M390 230 C 360 220, 340 210, 330 200" />
-              <path id="flow-house-lab" class="scene-flow" d="M370 200 C 430 190, 480 185, 540 200" />
+              <!-- Lab rack with blink LEDs -->
+              <g id="scene-lab" class="scene-node" data-domain="lab" transform="translate(548,148)">
+                <rect x="0" y="14" width="58" height="118" rx="3" class="scene-fill scene-rack-shell" />
+                <rect x="4" y="18" width="50" height="8" class="scene-rack-rail" />
+                <g class="scene-rack-units">
+                  <rect x="8" y="30" width="42" height="16" rx="1" class="scene-rack" />
+                  <circle cx="14" cy="38" r="2" class="scene-led is-ok" />
+                  <circle cx="20" cy="38" r="2" class="scene-led is-ok" />
+                  <rect x="28" y="34" width="18" height="8" rx="1" class="scene-rack-face" />
+                  <rect x="8" y="50" width="42" height="16" rx="1" class="scene-rack" />
+                  <circle cx="14" cy="58" r="2" class="scene-led is-ok" />
+                  <circle cx="20" cy="58" r="2" class="scene-led is-warn" />
+                  <rect x="28" y="54" width="18" height="8" rx="1" class="scene-rack-face" />
+                  <rect x="8" y="70" width="42" height="16" rx="1" class="scene-rack" />
+                  <circle cx="14" cy="78" r="2" class="scene-led is-ok" />
+                  <circle cx="20" cy="78" r="2" class="scene-led is-ok" />
+                  <rect x="28" y="74" width="18" height="8" rx="1" class="scene-rack-face" />
+                  <rect x="8" y="90" width="42" height="16" rx="1" class="scene-rack" />
+                  <circle cx="14" cy="98" r="2" class="scene-led is-ok" />
+                  <rect x="28" y="94" width="18" height="8" rx="1" class="scene-rack-face" />
+                  <rect x="8" y="110" width="42" height="14" rx="1" class="scene-rack" />
+                  <circle cx="14" cy="117" r="2" class="scene-led is-ok" />
+                  <circle cx="20" cy="117" r="2" class="scene-led is-ok" />
+                </g>
+                <circle class="scene-status" cx="29" cy="4" r="6" />
+                <text class="scene-label" x="29" y="148" text-anchor="middle">Lab</text>
+                <text class="scene-stat" x="29" y="162" text-anchor="middle" data-stat="lab">—</text>
+              </g>
             </g>
           </svg>
         </div>
       </div>
 
-      <div class="home-charts" aria-label="High-level charts">
-        <article class="chart-card">
-          <h2 class="chart-title">Health mix</h2>
-          <div class="chart-body">
-            <svg id="chart-donut" class="chart-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
-            <ul class="chart-legend" id="chart-legend"></ul>
-          </div>
+      <div class="home-basics" aria-label="Basic home health">
+        <article class="mode-card" id="mode-power">
+          <p class="mode-kicker">Power</p>
+          <p class="mode-value" id="mode-power-value">—</p>
+          <p class="mode-detail" id="mode-power-detail">Grid or battery</p>
         </article>
-        <article class="chart-card">
-          <h2 class="chart-title">Latency</h2>
-          <div class="chart-bars" id="chart-bars" role="img" aria-label="Latency by area"></div>
+        <article class="mode-card" id="mode-isp">
+          <p class="mode-kicker">Internet</p>
+          <p class="mode-value" id="mode-isp-value">—</p>
+          <p class="mode-detail" id="mode-isp-detail">Fiber or backup</p>
         </article>
-        <article class="chart-card chart-card-wide">
-          <h2 class="chart-title">Areas</h2>
-          <div class="pulse-board" id="pulse-board" role="list"></div>
+        <article class="chart-card chart-history">
+          <h2 class="chart-title">Today’s state</h2>
+          <div id="history-chart" class="history-chart" role="img" aria-label="Power and internet over time"></div>
+          <ul class="history-legend">
+            <li><span class="swatch is-grid"></span>Grid / Fiber</li>
+            <li><span class="swatch is-battery"></span>Battery / Backup</li>
+            <li><span class="swatch is-down"></span>Down / Unknown</li>
+          </ul>
         </article>
       </div>
 
+      <section class="home-services" aria-labelledby="home-services-title">
+        <div class="section-head compact">
+          <h2 id="home-services-title">Services</h2>
+          <p>Everyday links — movies, games, and more.</p>
+        </div>
+        <div id="home-services-grid" class="services-strip" role="list"></div>
+      </section>
+
+      <section class="weather-hazards" aria-labelledby="weather-title">
+        <div class="section-head compact">
+          <h2 id="weather-title">Weather &amp; quakes</h2>
+          <p id="weather-lead">Local conditions and what to do in a storm, flood, or earthquake.</p>
+        </div>
+        <div class="weather-live" id="weather-live">
+          <article class="weather-card" id="weather-card">
+            <p class="mode-kicker">Now</p>
+            <p class="weather-temp" id="weather-temp">—</p>
+            <p class="weather-forecast" id="weather-forecast">Loading forecast…</p>
+            <p class="weather-meta" id="weather-meta"></p>
+          </article>
+          <article class="weather-card" id="quakes-card">
+            <p class="mode-kicker">Nearby quakes</p>
+            <ul class="quake-list" id="quake-list"></ul>
+          </article>
+        </div>
+        <div id="hazards-grid" class="hazards-grid" role="list"></div>
+      </section>
+
+      <section class="emergency" aria-labelledby="emergency-title">
+        <div class="section-head compact">
+          <h2 id="emergency-title">In an emergency</h2>
+          <p id="emergency-lead">If anyone is hurt or in danger, call 911 first.</p>
+        </div>
+        <div id="emergency-grid" class="emergency-grid" role="list"></div>
+      </section>
+
       <section class="providers" aria-labelledby="providers-title">
         <div class="section-head compact">
-          <h2 id="providers-title">Providers</h2>
-          <p>Local utility and ISP contacts with live health when DockFire can probe them.</p>
+          <h2 id="providers-title">Contacts</h2>
+          <p>Utilities and support numbers for this house.</p>
         </div>
         <div id="providers-grid" class="providers-grid" role="list"></div>
       </section>
 
+      <div class="pulse-board home-areas" id="pulse-board" role="list" aria-label="House areas"></div>
+
       <div class="pulse-issues" id="pulse-issues" hidden>
         <table>
-          <caption>Issues</caption>
+          <caption>Needs attention</caption>
           <thead>
-            <tr><th>Area</th><th>Service</th><th>Detail</th></tr>
+            <tr><th>Area</th><th>What</th><th>Note</th></tr>
           </thead>
           <tbody id="pulse-issues-body"></tbody>
         </table>
@@ -185,64 +318,97 @@
         <div class="home-hero-copy">
           <p class="hero-kicker">Remote site</p>
           <h1 class="hero-title">Ranch</h1>
-          <p class="hero-sub" id="ranch-welcome">UDM Ranch over UniFi SD-WAN mesh from Chapman Residence.</p>
+          <p class="hero-sub" id="ranch-welcome">The ranch link from home. Right now only the ranch gateway answers from here.</p>
           <p class="home-pulse-line" id="ranch-pulse-summary">checking…</p>
         </div>
         <div class="home-scene-wrap" aria-label="Ranch scene">
-          <svg class="home-scene" viewBox="0 0 640 300" role="img" aria-labelledby="ranch-scene-title">
+          <svg class="home-scene" viewBox="0 0 640 300" role="img" aria-labelledby="ranch-scene-title" preserveAspectRatio="xMidYMid meet">
             <title id="ranch-scene-title">Ranch health scene</title>
             <defs>
+              <clipPath id="ranchClip"><rect x="0" y="0" width="640" height="300" rx="4" /></clipPath>
               <linearGradient id="ranchSky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.5" />
+                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.55" />
                 <stop offset="100%" stop-color="transparent" />
               </linearGradient>
               <linearGradient id="ranchRoof" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stop-color="var(--harbor)" />
                 <stop offset="100%" stop-color="var(--ember)" />
               </linearGradient>
+              <linearGradient id="ranchWall" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--ink) 18%, var(--panel-solid))" />
+                <stop offset="100%" stop-color="color-mix(in srgb, var(--ink) 36%, var(--panel-solid))" />
+              </linearGradient>
+              <linearGradient id="ranchGround" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="color-mix(in srgb, var(--ember) 14%, transparent)" />
+                <stop offset="100%" stop-color="transparent" />
+              </linearGradient>
             </defs>
-            <rect x="0" y="0" width="640" height="300" fill="url(#ranchSky)" />
-            <line class="scene-ground" x1="40" y1="250" x2="600" y2="250" />
+            <g clip-path="url(#ranchClip)">
+              <rect x="0" y="0" width="640" height="300" fill="url(#ranchSky)" />
+              <path class="scene-hills" d="M0 175 C 100 155, 200 168, 300 158 S 480 148, 640 162 L 640 250 L 0 250 Z" />
+              <path class="scene-yard" d="M20 248 C 160 236, 320 244, 480 238 S 600 242, 620 250 L 620 300 L 20 300 Z" fill="url(#ranchGround)" />
+              <path class="scene-ground-line" d="M28 248 C 180 236, 340 246, 500 240 S 590 244, 612 252" />
 
-            <!-- Home hub -->
-            <g id="ranch-home-hub" class="scene-node" data-domain="ranch-link" transform="translate(90,110)">
-              <rect x="0" y="30" width="70" height="90" rx="3" class="scene-fill" />
-              <rect x="10" y="42" width="50" height="14" class="scene-rack" />
-              <rect x="10" y="64" width="50" height="14" class="scene-rack" />
-              <rect x="10" y="86" width="50" height="14" class="scene-rack" />
-              <circle class="scene-status" cx="35" cy="18" r="6" />
-              <text class="scene-label" x="35" y="140" text-anchor="middle">Home</text>
-              <text class="scene-stat" x="35" y="156" text-anchor="middle" data-stat="ranch-link">—</text>
-            </g>
+              <!-- Tunnel packets -->
+              <g class="scene-flows" fill="none">
+                <path id="flow-ranch-tunnel" class="scene-flow" d="M178 155 C 270 118, 370 118, 458 155" />
+                <path class="scene-flow scene-flow-soft" d="M178 165 C 270 138, 370 138, 458 165" />
+              </g>
+              <g class="scene-tunnel-nodes" aria-hidden="true">
+                <circle class="scene-packet" cx="240" cy="132" r="3" />
+                <circle class="scene-packet" cx="320" cy="122" r="3" />
+                <circle class="scene-packet" cx="400" cy="132" r="3" />
+              </g>
 
-            <!-- Tunnel flow -->
-            <path id="flow-ranch-tunnel" class="scene-flow" d="M170 160 C 260 120, 360 120, 450 160" />
+              <!-- Home UDM / rack hub -->
+              <g id="ranch-home-hub" class="scene-node" data-domain="ranch-link" transform="translate(78,88)">
+                <rect x="8" y="28" width="78" height="108" rx="4" class="scene-fill scene-rack-shell" />
+                <rect x="14" y="34" width="66" height="10" class="scene-rack-rail" />
+                <rect x="18" y="50" width="58" height="18" rx="1" class="scene-rack" />
+                <circle cx="26" cy="59" r="2.5" class="scene-led is-ok" />
+                <circle cx="34" cy="59" r="2.5" class="scene-led is-ok" />
+                <rect x="44" y="54" width="26" height="10" rx="1" class="scene-rack-face" />
+                <rect x="18" y="74" width="58" height="18" rx="1" class="scene-rack" />
+                <circle cx="26" cy="83" r="2.5" class="scene-led is-ok" />
+                <rect x="44" y="78" width="26" height="10" rx="1" class="scene-rack-face" />
+                <rect x="18" y="98" width="58" height="18" rx="1" class="scene-rack" />
+                <circle cx="26" cy="107" r="2.5" class="scene-led is-ok" />
+                <circle cx="34" cy="107" r="2.5" class="scene-led is-ok" />
+                <text class="scene-mini" x="47" y="128" text-anchor="middle">UDMP</text>
+                <circle class="scene-status" cx="47" cy="14" r="6" />
+                <text class="scene-label" x="47" y="156" text-anchor="middle">Home</text>
+                <text class="scene-stat" x="47" y="170" text-anchor="middle" data-stat="ranch-link">—</text>
+              </g>
 
-            <!-- Ranch house / UDM -->
-            <g id="ranch-udm" class="scene-node" data-domain="ranch-gateway" transform="translate(460,100)">
-              <path d="M10 70 L55 28 L100 70 Z" fill="url(#ranchRoof)" class="scene-roof" />
-              <rect x="22" y="70" width="66" height="60" class="scene-fill" />
-              <rect x="36" y="88" width="16" height="18" class="scene-window" />
-              <rect x="62" y="92" width="16" height="38" class="scene-door" />
-              <circle class="scene-status" cx="55" cy="16" r="6" />
-              <text class="scene-label" x="55" y="150" text-anchor="middle">Ranch</text>
-              <text class="scene-stat" x="55" y="166" text-anchor="middle" data-stat="ranch-gateway">—</text>
+              <!-- Ranch barn / house -->
+              <g id="ranch-udm" class="scene-node" data-domain="ranch-gateway" transform="translate(448,72)">
+                <path d="M8 88 L70 22 L132 88 Z" fill="url(#ranchRoof)" class="scene-roof" />
+                <path d="M20 88 L70 34 L120 88" class="scene-roof-edge" />
+                <rect x="24" y="88" width="92" height="72" fill="url(#ranchWall)" class="scene-wall" />
+                <rect x="24" y="88" width="92" height="5" class="scene-fascia" />
+                <!-- loft window -->
+                <rect x="58" y="48" width="24" height="18" rx="1" class="scene-window" />
+                <path d="M70 48 V66 M58 57 H82" class="scene-window-mullion" />
+                <!-- barn doors -->
+                <rect x="40" y="108" width="28" height="52" class="scene-door" />
+                <rect x="72" y="108" width="28" height="52" class="scene-door" />
+                <path d="M54 108 V160 M86 108 V160" class="scene-window-mullion" />
+                <!-- fence hint -->
+                <path d="M0 160 H20 M132 160 H152 M4 150 V160 M16 150 V160 M136 150 V160 M148 150 V160" class="scene-fence" />
+                <circle class="scene-status" cx="70" cy="10" r="6" />
+                <text class="scene-label" x="70" y="188" text-anchor="middle">Ranch</text>
+                <text class="scene-stat" x="70" y="202" text-anchor="middle" data-stat="ranch-gateway">—</text>
+              </g>
             </g>
           </svg>
         </div>
       </div>
 
-      <div class="home-charts" aria-label="Ranch charts">
-        <article class="chart-card">
-          <h2 class="chart-title">Ranch health</h2>
-          <div class="chart-body">
-            <svg id="ranch-chart-donut" class="chart-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
-            <ul class="chart-legend" id="ranch-chart-legend"></ul>
-          </div>
-        </article>
+      <div class="home-basics ranch-basics" aria-label="Ranch health">
         <article class="chart-card chart-card-wide">
-          <h2 class="chart-title">Areas</h2>
+          <h2 class="chart-title">Ranch status</h2>
           <div class="pulse-board" id="ranch-pulse-board" role="list"></div>
+          <p class="ranch-empty-hint" id="ranch-empty-hint">From this network we can reach the ranch gateway (UniFi OS). No other ranch devices answered a scan.</p>
         </article>
       </div>
 
@@ -301,7 +467,21 @@
       </div>
       <div id="local-grid" class="launch-grid" role="list"></div>
       <div class="section-head compact" style="margin-top:1.5rem">
-        <h3>Health checks</h3>
+        <h3>Detailed checks</h3>
+        <p>Latency and reachability for operators.</p>
+      </div>
+      <div class="home-charts infra-charts" aria-label="Detailed charts">
+        <article class="chart-card">
+          <h2 class="chart-title">Health mix</h2>
+          <div class="chart-body">
+            <svg id="chart-donut" class="chart-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+            <ul class="chart-legend" id="chart-legend"></ul>
+          </div>
+        </article>
+        <article class="chart-card">
+          <h2 class="chart-title">Latency</h2>
+          <div class="chart-bars" id="chart-bars" role="img" aria-label="Latency by area"></div>
+        </article>
       </div>
       <div id="grid" class="grid" role="list"></div>
     </section>
@@ -334,7 +514,8 @@
       <strong>DockFire</strong> · DataKnifeAI ·
       <a href="https://github.com/DataKnifeAI/dockfire">GitHub</a> ·
       <a href="https://gitlab.com/dk-raas/dkai/dockfire">GitLab</a> ·
-      <code>/api/status</code> · <code>/api/home</code>
+      <code>/api/status</code> · <code>/api/home</code> ·
+      install locally via browser or <code>./scripts/run-local.sh</code>
     </p>
   </footer>
 
@@ -396,6 +577,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=20" defer></script>
+  <script src="app.js?v=23" defer></script>
 </body>
 </html>

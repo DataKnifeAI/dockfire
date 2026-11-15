@@ -1,12 +1,24 @@
-const ICON_VER = "20";
+const ICON_VER = "23";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
 const VIEW_KEY = "dockfire-view";
+const HISTORY_KEY = "dockfire-mode-history";
 const VIEWS = ["home", "ranch", "favorites", "automation", "infra", "guide"];
 
 const FAVORITE_SECTIONS = new Set(["shares", "games", "external"]);
 const FAVORITE_FROM_HOME = new Set(["Plex (lab)", "Plex (app)", "Brother printer", "Sign in"]);
+const HOME_SERVICE_NAMES = [
+  "Plex (app)",
+  "Movies",
+  "Shows",
+  "Photos",
+  "Anime",
+  "Palworld",
+  "Windrose",
+  "Satisfactory",
+  "Brother printer",
+];
 const AUTOMATION_NAMES = new Set([
   "Lutron",
   "SmartThings",
@@ -23,12 +35,22 @@ const els = {
   favoritesGrid: document.getElementById("favorites-grid"),
   automationGrid: document.getElementById("automation-grid"),
   localGrid: document.getElementById("local-grid"),
+  homeServicesGrid: document.getElementById("home-services-grid"),
   heroWelcome: document.getElementById("hero-welcome"),
   pulseSummary: document.getElementById("pulse-summary"),
   pulseBoard: document.getElementById("pulse-board"),
   pulseIssues: document.getElementById("pulse-issues"),
   pulseIssuesBody: document.getElementById("pulse-issues-body"),
   providersGrid: document.getElementById("providers-grid"),
+  emergencyGrid: document.getElementById("emergency-grid"),
+  emergencyLead: document.getElementById("emergency-lead"),
+  modePower: document.getElementById("mode-power"),
+  modePowerValue: document.getElementById("mode-power-value"),
+  modePowerDetail: document.getElementById("mode-power-detail"),
+  modeIsp: document.getElementById("mode-isp"),
+  modeIspValue: document.getElementById("mode-isp-value"),
+  modeIspDetail: document.getElementById("mode-isp-detail"),
+  historyChart: document.getElementById("history-chart"),
   chartDonut: document.getElementById("chart-donut"),
   chartLegend: document.getElementById("chart-legend"),
   chartBars: document.getElementById("chart-bars"),
@@ -37,8 +59,7 @@ const els = {
   ranchPulseBoard: document.getElementById("ranch-pulse-board"),
   ranchPulseIssues: document.getElementById("ranch-pulse-issues"),
   ranchPulseIssuesBody: document.getElementById("ranch-pulse-issues-body"),
-  ranchChartDonut: document.getElementById("ranch-chart-donut"),
-  ranchChartLegend: document.getElementById("ranch-chart-legend"),
+  ranchEmptyHint: document.getElementById("ranch-empty-hint"),
   grid: document.getElementById("grid"),
   kindFilters: document.getElementById("kind-filters"),
   online: document.getElementById("stat-online"),
@@ -46,7 +67,18 @@ const els = {
   latency: document.getElementById("stat-latency"),
   kinds: document.getElementById("stat-kinds"),
   checked: document.getElementById("stat-checked"),
+  installApp: document.getElementById("install-app"),
+  offlineBanner: document.getElementById("offline-banner"),
+  weatherTemp: document.getElementById("weather-temp"),
+  weatherForecast: document.getElementById("weather-forecast"),
+  weatherMeta: document.getElementById("weather-meta"),
+  quakeList: document.getElementById("quake-list"),
+  weatherLead: document.getElementById("weather-lead"),
+  hazardsGrid: document.getElementById("hazards-grid"),
 };
+
+let deferredInstall = null;
+let usingMock = false;
 
 const templates = {
   launch: document.getElementById("launch-template"),
@@ -74,6 +106,129 @@ async function fetchJson(path) {
   const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`${path} ${res.status}`);
   return res.json();
+}
+
+async function fetchApiOrMock(apiPath, mockPath) {
+  try {
+    const data = await fetchJson(apiPath);
+    return { data, mock: false };
+  } catch (err) {
+    console.warn(`${apiPath} unavailable, using mock`, err);
+    const data = await fetchJson(mockPath);
+    return { data, mock: true };
+  }
+}
+
+function setOfflineBanner(on) {
+  usingMock = on;
+  if (els.offlineBanner) els.offlineBanner.hidden = !on;
+}
+
+function renderWeather(home) {
+  const weather = home?.weather;
+  if (els.weatherTemp) {
+    els.weatherTemp.textContent =
+      weather && weather.temp != null ? `${weather.temp}°${weather.unit || "F"}` : "—";
+  }
+  if (els.weatherForecast) {
+    els.weatherForecast.textContent = weather?.forecast || home?.weather_note || "Forecast unavailable";
+  }
+  if (els.weatherMeta) {
+    const bits = [];
+    if (weather?.name) bits.push(weather.name);
+    if (weather?.wind) bits.push(`Wind ${weather.wind}`);
+    els.weatherMeta.textContent = bits.join(" · ");
+  }
+  if (els.quakeList) {
+    els.quakeList.replaceChildren();
+    const quakes = home?.quakes || [];
+    if (!quakes.length) {
+      const li = document.createElement("li");
+      li.textContent = "No nearby quakes (mag 2.5+) in the last day.";
+      els.quakeList.appendChild(li);
+    } else {
+      for (const q of quakes) {
+        const li = document.createElement("li");
+        const mag = q.mag != null ? `M${Number(q.mag).toFixed(1)}` : "M?";
+        if (q.url) {
+          const a = document.createElement("a");
+          a.href = q.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = `${mag} · ${q.place || "nearby"}`;
+          li.appendChild(a);
+        } else {
+          li.textContent = `${mag} · ${q.place || "nearby"}`;
+        }
+        els.quakeList.appendChild(li);
+      }
+    }
+  }
+}
+
+function renderHazards(data) {
+  if (!els.hazardsGrid) return;
+  if (els.weatherLead && data.lead) els.weatherLead.textContent = data.lead;
+  els.hazardsGrid.replaceChildren();
+  for (const action of data.actions || []) {
+    const card = document.createElement("article");
+    card.className = "hazard-card";
+    card.setAttribute("role", "listitem");
+    const title = document.createElement("h3");
+    title.textContent = action.title || "";
+    card.appendChild(title);
+    const list = document.createElement("ul");
+    for (const step of action.do || []) {
+      const li = document.createElement("li");
+      li.textContent = step;
+      list.appendChild(li);
+    }
+    card.appendChild(list);
+    if (action.links?.length) {
+      const links = document.createElement("div");
+      links.className = "hazard-links";
+      for (const link of action.links) {
+        const a = document.createElement("a");
+        a.href = link.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = link.label || link.url;
+        links.appendChild(a);
+      }
+      card.appendChild(links);
+    }
+    els.hazardsGrid.appendChild(card);
+  }
+}
+
+function loadLocalHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveLocalHistory(samples) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(samples.slice(-48)));
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function mergeHistory(serverSamples = []) {
+  const local = loadLocalHistory();
+  const byT = new Map();
+  for (const s of [...local, ...serverSamples]) {
+    if (!s || typeof s.t !== "number") continue;
+    byT.set(s.t, s);
+  }
+  const merged = [...byT.values()].sort((a, b) => a.t - b.t).slice(-48);
+  saveLocalHistory(merged);
+  return merged;
 }
 
 function fmtMs(ms) {
@@ -305,18 +460,167 @@ function renderCatalogSections() {
 
 function renderCatalog(data) {
   catalog = data;
-  if (data.welcome && els.heroWelcome) els.heroWelcome.textContent = data.welcome;
+  if (data.welcome && els.heroWelcome) {
+    // Keep home copy plain; catalog welcome can stay for search contexts.
+  }
   renderAudienceFilters();
   renderCatalogSections();
+  renderHomeServices();
 }
 
 function primaryStat(domain) {
+  if (domain.mode === "grid" || domain.mode === "primary") return domain.stats?.[0]?.value || "Grid";
+  if (domain.mode === "battery" || domain.mode === "backup") return domain.stats?.[0]?.value || "Backup";
   const first = (domain.stats || [])[0];
   if (first?.value) return String(first.value);
   if (domain.status === "ok") return "ok";
   if (domain.status === "bad") return "down";
-  if (domain.status === "warn") return "warn";
+  if (domain.status === "warn") return "check";
   return "—";
+}
+
+function historyClass(kind, value) {
+  if (kind === "power") {
+    if (value === "grid") return "is-grid";
+    if (value === "battery") return "is-battery";
+    return "is-down";
+  }
+  if (value === "primary") return "is-grid";
+  if (value === "backup") return "is-battery";
+  return "is-down";
+}
+
+function renderModes(modes = {}) {
+  const power = modes.power || {};
+  const isp = modes.isp || {};
+  if (els.modePowerValue) els.modePowerValue.textContent = power.label || "—";
+  if (els.modePowerDetail) els.modePowerDetail.textContent = power.detail || "Grid or battery";
+  if (els.modePower) els.modePower.dataset.status = power.status || "unknown";
+  if (els.modeIspValue) els.modeIspValue.textContent = isp.label || "—";
+  if (els.modeIspDetail) els.modeIspDetail.textContent = isp.detail || "Fiber or backup";
+  if (els.modeIsp) els.modeIsp.dataset.status = isp.status || "unknown";
+}
+
+function renderHistoryChart(samples = []) {
+  if (!els.historyChart) return;
+  els.historyChart.replaceChildren();
+  if (!samples.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-hint";
+    empty.textContent = "History builds as DockFire checks the house.";
+    els.historyChart.appendChild(empty);
+    return;
+  }
+  for (const kind of ["power", "isp"]) {
+    const row = document.createElement("div");
+    row.className = "history-row";
+    const label = document.createElement("span");
+    label.className = "history-row-label";
+    label.textContent = kind === "power" ? "Power" : "Internet";
+    const track = document.createElement("div");
+    track.className = "history-track";
+    for (const sample of samples) {
+      const seg = document.createElement("span");
+      seg.className = `history-seg ${historyClass(kind, sample[kind])}`;
+      const when = new Date(sample.t * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      seg.title = `${when}: ${sample[kind] || "unknown"}`;
+      track.appendChild(seg);
+    }
+    row.append(label, track);
+    els.historyChart.appendChild(row);
+  }
+}
+
+function renderEmergency(data) {
+  if (!els.emergencyGrid) return;
+  if (els.emergencyLead && data.lead) els.emergencyLead.textContent = data.lead;
+  els.emergencyGrid.replaceChildren();
+  for (const step of data.steps || []) {
+    const card = document.createElement("article");
+    card.className = "emergency-card";
+    card.setAttribute("role", "listitem");
+    const title = document.createElement("h3");
+    title.textContent = step.title || "";
+    const action = document.createElement("p");
+    action.className = "emergency-action";
+    if (step.phone) {
+      const a = document.createElement("a");
+      a.href = `tel:${String(step.phone).replace(/[^\d+]/g, "")}`;
+      a.textContent = step.action || step.phone;
+      action.appendChild(a);
+    } else {
+      action.textContent = step.action || "";
+    }
+    const detail = document.createElement("p");
+    detail.className = "emergency-detail";
+    detail.textContent = step.detail || "";
+    card.append(title, action, detail);
+    if (step.url) {
+      const link = document.createElement("a");
+      link.className = "emergency-link";
+      link.href = step.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Open guide";
+      card.appendChild(link);
+    }
+    els.emergencyGrid.appendChild(card);
+  }
+}
+
+function collectHomeServices() {
+  const byName = new Map();
+  for (const section of catalog?.sections || []) {
+    for (const item of section.items || []) {
+      if (HOME_SERVICE_NAMES.includes(item.name)) byName.set(item.name, item);
+    }
+  }
+  return HOME_SERVICE_NAMES.map((n) => byName.get(n)).filter(Boolean);
+}
+
+function renderHomeServices() {
+  if (!els.homeServicesGrid) return;
+  els.homeServicesGrid.replaceChildren();
+  const items = collectHomeServices();
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-hint";
+    empty.textContent = "Services load with the catalog.";
+    els.homeServicesGrid.appendChild(empty);
+    return;
+  }
+  for (const item of items) {
+    const a = document.createElement(item.url ? "a" : "div");
+    a.className = "service-chip";
+    a.setAttribute("role", "listitem");
+    if (item.url) {
+      if (item.url.startsWith("#")) {
+        a.href = item.url;
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const view = item.url.replace("#view-", "");
+          if (VIEWS.includes(view)) showView(view);
+        });
+      } else {
+        a.href = item.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+      }
+    }
+    const status = item.statusName ? statusByName.get(item.statusName) : null;
+    const dot = document.createElement("span");
+    dot.className = `pulse-card-dot is-${status?.status || "external"}`;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.width = 22;
+    img.height = 22;
+    setIcon(img, item.favicon || item.vendor, "");
+    const name = document.createElement("span");
+    name.className = "service-chip-name";
+    name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
+    a.append(dot, img, name);
+    els.homeServicesGrid.appendChild(a);
+  }
 }
 
 function siteBundle(home, siteId) {
@@ -351,6 +655,7 @@ function updateScene(domains, root = document) {
     else if (id.includes("grid")) status = byId.internet?.status || "unknown";
     else if (id.includes("power")) status = byId.power?.status || "unknown";
     else if (id.includes("lab")) status = byId.lab?.status || "unknown";
+    else if (id.includes("pool")) status = byId.pool?.status || "unknown";
     else if (id.includes("ranch")) status = byId["ranch-gateway"]?.status || byId["ranch-link"]?.status || "unknown";
     flow.classList.add(`is-${status}`);
   });
@@ -526,31 +831,49 @@ function renderHomePulse(home) {
   const bundle = siteBundle(home, "home");
   const domains = bundle.domains || [];
   const summary = bundle.summary || {};
-  if (els.pulseSummary) els.pulseSummary.textContent = pulseLine(summary, domains);
+  if (els.pulseSummary) {
+    const bad = summary.bad || 0;
+    els.pulseSummary.textContent = bad
+      ? `${bad} thing${bad === 1 ? "" : "s"} need attention`
+      : "House looks okay";
+  }
 
   updateScene(domains, document.getElementById("view-home") || document);
-  renderDonut(summary, els.chartDonut, els.chartLegend);
-  renderBars(domains);
+  renderModes(home.modes || {});
+  renderHistoryChart(mergeHistory(home.history || []));
+  renderWeather(home);
   fillPulseBoard(els.pulseBoard, domains);
   fillIssues(els.pulseIssues, els.pulseIssuesBody, bundle.issues || []);
   renderProviders(home, "home");
+  renderHomeServices();
   renderRanchPulse(home);
+
+  // Detailed charts live on Infra.
+  renderDonut(summary, els.chartDonut, els.chartLegend);
+  renderBars(domains);
 }
 
 function renderRanchPulse(home) {
   const bundle = siteBundle(home, "ranch");
   const domains = bundle.domains || [];
   const summary = bundle.summary || {};
-  if (els.ranchWelcome && bundle.blurb) els.ranchWelcome.textContent = bundle.blurb;
+  if (els.ranchWelcome) {
+    els.ranchWelcome.textContent =
+      bundle.blurb ||
+      "The ranch link from home. Right now only the ranch gateway answers from here.";
+  }
   if (els.ranchPulseSummary) {
     els.ranchPulseSummary.textContent = domains.length
       ? pulseLine(summary, domains)
-      : "Ranch probe pending — add Ranch Gateway to LAN overlay";
+      : "Ranch link not configured yet";
   }
   updateScene(domains, document.getElementById("view-ranch") || document);
-  renderDonut(summary, els.ranchChartDonut, els.ranchChartLegend);
   fillPulseBoard(els.ranchPulseBoard, domains);
   fillIssues(els.ranchPulseIssues, els.ranchPulseIssuesBody, bundle.issues || []);
+  if (els.ranchEmptyHint) {
+    const gw = domains.find((d) => d.id === "ranch-gateway");
+    els.ranchEmptyHint.hidden = !(gw && gw.status === "ok");
+  }
 }
 
 function renderProviders(home, siteId = "home") {
@@ -766,25 +1089,30 @@ function summarize(counts = {}) {
 }
 
 async function refresh() {
-  els.summary.textContent = "checking home & lab…";
+  els.summary.textContent = "checking…";
   if (els.pulseSummary) els.pulseSummary.textContent = "checking…";
   els.refresh.disabled = true;
   try {
-    const [data, home] = await Promise.all([
-      fetchJson("/api/status"),
-      fetchJson("/api/home").catch(() => null),
+    const [statusRes, homeRes] = await Promise.all([
+      fetchApiOrMock("/api/status", "/mock/status.json"),
+      fetchApiOrMock("/api/home", "/mock/home.json"),
     ]);
+    const data = statusRes.data;
+    const home = homeRes.data;
+    setOfflineBanner(statusRes.mock || homeRes.mock);
     lastPayload = data;
     statusByName = new Map((data.services || []).map((s) => [s.name, s]));
     renderStats(data);
     renderGrid(data);
     renderCatalogSections();
+    renderHomeServices();
     if (home) renderHomePulse(home);
     else if (providers.length) renderProviders(null);
-    els.summary.textContent = summarize(data.counts);
+    els.summary.textContent = (statusRes.mock ? "local · " : "") + summarize(data.counts);
   } catch (err) {
-    els.summary.textContent = `health check failed: ${err.message}`;
-    if (els.pulseSummary) els.pulseSummary.textContent = "health check failed";
+    setOfflineBanner(true);
+    els.summary.textContent = `check failed: ${err.message}`;
+    if (els.pulseSummary) els.pulseSummary.textContent = "check failed";
     console.error(err);
   } finally {
     els.refresh.disabled = false;
@@ -854,6 +1182,47 @@ fetchJson("/wiki.json")
     const intro = document.getElementById("wiki-intro");
     if (intro) intro.textContent = `Guide failed to load: ${err.message}`;
   });
+
+fetchJson("/emergency.json")
+  .then(renderEmergency)
+  .catch(() => {
+    if (els.emergencyLead) els.emergencyLead.textContent = "Emergency contacts failed to load.";
+  });
+
+fetchJson("/hazards.json")
+  .then(renderHazards)
+  .catch(() => {
+    if (els.weatherLead) els.weatherLead.textContent = "Weather guidance failed to load.";
+  });
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  if (els.installApp) els.installApp.hidden = false;
+});
+
+els.installApp?.addEventListener("click", async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  try {
+    await deferredInstall.userChoice;
+  } catch (_) {
+    /* ignore */
+  }
+  deferredInstall = null;
+  if (els.installApp) els.installApp.hidden = true;
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstall = null;
+  if (els.installApp) els.installApp.hidden = true;
+});
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch((err) => {
+    console.warn("service worker registration failed", err);
+  });
+}
 
 refresh();
 setInterval(refresh, 60_000);

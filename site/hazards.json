@@ -1,0 +1,45 @@
+{
+  "title": "Weather & quakes",
+  "lead": "Sacramento can get winter storms, flooding near rivers, and occasional earthquakes. Live alerts sit above — what to do is below.",
+  "actions": [
+    {
+      "id": "storm",
+      "title": "Storm / high wind",
+      "do": [
+        "Stay inside away from windows if winds are severe",
+        "Unplug outdoor gear and move patio furniture if you can do it safely",
+        "Watch for outages — Powerwall may keep lights on; Starlink is the backup internet",
+        "If a tree or line is down, stay clear and call 911 if it is on a road or touching a house"
+      ]
+    },
+    {
+      "id": "flood",
+      "title": "Flood warning",
+      "do": [
+        "Never drive through flooded streets — turn around",
+        "Move cars and valuables to higher ground if you have time",
+        "If officials say evacuate, leave early and follow their routes",
+        "Do not walk through moving water; six inches can knock you down"
+      ],
+      "links": [
+        { "label": "Sacramento Alert signup", "url": "https://sacramentoready.saccounty.gov/" },
+        { "label": "SAFCA flood info", "url": "https://www.safca.org/about/information-for-flood-events/" }
+      ]
+    },
+    {
+      "id": "quake",
+      "title": "Earthquake",
+      "do": [
+        "Drop, Cover, and Hold On under a sturdy table or against an interior wall",
+        "Stay inside until shaking stops — then check for gas smells, sparks, or water leaks",
+        "If outside, move away from buildings, wires, and trees",
+        "Expect aftershocks; only call 911 for life-threatening emergencies",
+        "Text family instead of calling when you can — keep phone lines clear"
+      ],
+      "links": [
+        { "label": "Earthquake.ca.gov", "url": "https://www.earthquake.ca.gov/" },
+        { "label": "Great ShakeOut", "url": "https://www.shakeout.org/california/" }
+      ]
+    }
+  ]
+}

@@ -25,7 +25,11 @@ HOME_PATH = Path(os.environ.get("DOCKFIRE_HOME", "/usr/share/nginx/html/home.jso
 LISTEN = ("0.0.0.0", int(os.environ.get("DOCKFIRE_CHECK_PORT", "8081")))
 TIMEOUT = float(os.environ.get("DOCKFIRE_CHECK_TIMEOUT", "2.0"))
 HTTP_TIMEOUT = float(os.environ.get("DOCKFIRE_HTTP_TIMEOUT", "2.5"))
+HISTORY_MAX = int(os.environ.get("DOCKFIRE_HISTORY_MAX", "48"))
 SSL_CTX = ssl._create_unverified_context()  # noqa: S323 — LAN gear uses private certs
+
+# In-process ring buffer for family mode timeline (power + ISP).
+_MODE_HISTORY: list[dict] = []
 
 
 def _read_json(path: Path) -> dict:
@@ -89,9 +93,16 @@ def tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str | None, f
         return False, str(err.strerror or err), ms
 
 
-def http_get(url: str, timeout: float = HTTP_TIMEOUT) -> tuple[int | None, bytes, float]:
+def http_get(
+    url: str,
+    timeout: float = HTTP_TIMEOUT,
+    headers: dict | None = None,
+) -> tuple[int | None, bytes, float]:
     start = time.perf_counter()
-    req = urllib.request.Request(url, headers={"User-Agent": "dockfire-checker/1"})
+    hdrs = {"User-Agent": "dockfire-checker/1"}
+    if headers:
+        hdrs.update(headers)
+    req = urllib.request.Request(url, headers=hdrs)
     try:
         with urllib.request.urlopen(req, context=SSL_CTX, timeout=timeout) as resp:
             return resp.status, resp.read(65536), (time.perf_counter() - start) * 1000
@@ -206,35 +217,111 @@ def _worst(statuses: list[str]) -> str:
     return max(statuses, key=_rank)
 
 
-def enrich_envoy() -> dict:
-    code, body, ms = http_get("https://envoy.dataknife.net/info")
-    if code != 200 or not body:
-        return {"stats": [], "note": "Envoy /info unavailable", "latency_ms": round(ms, 1)}
+def enrich_solar(svc_map: dict[str, dict]) -> dict:
+    """Two arrays: Enphase (LAN) + SolarEdge (not currently seen on LAN)."""
+    envoy = svc_map.get("Enphase Envoy") or {}
+    se = svc_map.get("SolarEdge") or {}
+    code, _body, ms = http_get("https://envoy.dataknife.net/info")
+    # production.json needs token — do not pretend we have watts.
     stats = []
-    try:
-        root = ET.fromstring(body)
-        device = root.find("device")
-        if device is not None:
-            sn = (device.findtext("sn") or "").strip()
-            sw = (device.findtext("software") or "").strip()
-            if sn:
-                stats.append({"label": "Serial", "value": sn[-6:]})
-            if sw:
-                stats.append({"label": "FW", "value": sw})
-        stats.append({"label": "Info", "value": f"{ms:.0f}ms"})
-    except ET.ParseError:
-        stats.append({"label": "Info", "value": "up"})
-    return {
-        "stats": stats,
-        "note": "Live production needs Enphase token",
-        "latency_ms": round(ms, 1),
+    if code == 200 or envoy.get("status") == "ok":
+        stats.append({"label": "Enphase", "value": "online"})
+    elif envoy.get("status") == "bad" or (code and code >= 400):
+        stats.append({"label": "Enphase", "value": "down"})
+    else:
+        stats.append({"label": "Enphase", "value": "—"})
+
+    if se.get("status") == "ok":
+        stats.append({"label": "SolarEdge", "value": "online"})
+    elif se.get("status") == "bad":
+        stats.append({"label": "SolarEdge", "value": "down"})
+    else:
+        stats.append({"label": "SolarEdge", "value": "not on LAN"})
+
+    note = "Live kW / battery % need Enphase, SolarEdge, and Tesla login"
+    return {"stats": stats, "note": note, "latency_ms": round(ms, 1) if ms else envoy.get("latency_ms")}
+
+
+def fetch_weather_bundle() -> dict:
+    """NWS forecast + nearby USGS quakes (public APIs, best-effort)."""
+    out: dict = {
+        "weather": None,
+        "quakes": [],
+        "note": "",
     }
+    # Sacramento-ish point
+    lat, lon = 38.5816, -121.4944
+    try:
+        code, body, _ = http_get(
+            f"https://api.weather.gov/points/{lat},{lon}",
+            headers={"User-Agent": "DockFire/1.0 (dataknife.ai; home hub)", "Accept": "application/geo+json"},
+        )
+        if code == 200 and body:
+            points = json.loads(body.decode())
+            forecast_url = (points.get("properties") or {}).get("forecast")
+            if forecast_url:
+                fcode, fbody, _ = http_get(
+                    forecast_url,
+                    headers={
+                        "User-Agent": "DockFire/1.0 (dataknife.ai; home hub)",
+                        "Accept": "application/geo+json",
+                    },
+                )
+                if fcode == 200 and fbody:
+                    periods = (json.loads(fbody.decode()).get("properties") or {}).get("periods") or []
+                    if periods:
+                        p0 = periods[0]
+                        out["weather"] = {
+                            "name": p0.get("name"),
+                            "temp": p0.get("temperature"),
+                            "unit": p0.get("temperatureUnit") or "F",
+                            "wind": p0.get("windSpeed"),
+                            "forecast": p0.get("shortForecast"),
+                            "detail": (p0.get("detailedForecast") or "")[:220],
+                        }
+    except Exception as err:  # noqa: BLE001
+        out["note"] = f"Weather unavailable: {err}"
+
+    try:
+        # Mag 2.5+ last day, then filter ~150 mi of Sacramento
+        qcode, qbody, _ = http_get(
+            "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
+        )
+        if qcode == 200 and qbody:
+            feats = json.loads(qbody.decode()).get("features") or []
+            nearby = []
+            for feat in feats:
+                props = feat.get("properties") or {}
+                coords = (feat.get("geometry") or {}).get("coordinates") or [None, None]
+                lon_e, lat_e = coords[0], coords[1]
+                if lat_e is None or lon_e is None:
+                    continue
+                # rough degrees box ~2.5° ≈ 150 mi
+                if abs(lat_e - lat) > 2.5 or abs(lon_e - lon) > 2.5:
+                    continue
+                nearby.append(
+                    {
+                        "mag": props.get("mag"),
+                        "place": props.get("place"),
+                        "time": props.get("time"),
+                        "url": props.get("url"),
+                    }
+                )
+            nearby.sort(key=lambda q: q.get("mag") or 0, reverse=True)
+            out["quakes"] = nearby[:5]
+    except Exception as err:  # noqa: BLE001
+        if out["note"]:
+            out["note"] += f" · Quakes unavailable: {err}"
+        else:
+            out["note"] = f"Quakes unavailable: {err}"
+
+    return out
 
 
 def enrich_tesla() -> dict:
     code, body, ms = http_get("https://tesla.dataknife.net/api/status")
     if code != 200 or not body:
-        return {"stats": [], "note": "Powerwall status API unavailable", "latency_ms": round(ms, 1)}
+        return {"stats": [], "note": "Powerwall not answering", "latency_ms": round(ms, 1)}
     try:
         data = json.loads(body.decode())
     except (json.JSONDecodeError, UnicodeDecodeError):
@@ -243,14 +330,12 @@ def enrich_tesla() -> dict:
     # "420h3m58.682..." → "420h"
     m = re.match(r"(\d+h(?:\d+m)?)", uptime)
     up_short = m.group(1) if m else (uptime.split(".")[0] if uptime else "—")
-    version = str(data.get("version") or "").split()[0] or "—"
     return {
         "stats": [
-            {"label": "Uptime", "value": up_short},
-            {"label": "FW", "value": version},
-            {"label": "API", "value": f"{ms:.0f}ms"},
+            {"label": "Battery", "value": "online"},
+            {"label": "Up", "value": up_short},
         ],
-        "note": "SoC / meters need Tesla login",
+        "note": "Grid vs battery detail needs Tesla login",
         "latency_ms": round(ms, 1),
         "din": data.get("din"),
     }
@@ -259,15 +344,96 @@ def enrich_tesla() -> dict:
 def enrich_internet(svc_map: dict[str, dict]) -> dict:
     isp = svc_map.get("Internet (ISP)") or {}
     ms = isp.get("latency_ms")
-    stats = []
-    if ms is not None:
-        stats.append({"label": "Latency", "value": f"{ms:.0f}ms"})
-    stats.append({"label": "Primary", "value": "Fidium"})
-    stats.append({"label": "Backup", "value": "Starlink"})
-    note = "Fiber primary · Starlink failover WAN2"
-    if isp.get("status") == "bad":
-        note = isp.get("detail") or "WAN path down"
+    if isp.get("status") == "ok":
+        stats = [{"label": "Using", "value": "Fiber"}]
+        if ms is not None:
+            stats.append({"label": "Speed-check", "value": f"{ms:.0f}ms"})
+        note = "Primary fiber · Starlink on standby"
+    elif isp.get("status") == "bad":
+        stats = [{"label": "Using", "value": "Backup?"}]
+        note = "Fiber path down — Starlink may be active"
+    else:
+        stats = [{"label": "Using", "value": "—"}]
+        note = "Internet path unknown"
     return {"stats": stats, "note": note, "latency_ms": ms}
+
+
+def derive_modes(svc_map: dict[str, dict]) -> dict:
+    """Family-facing power + ISP mode (not full telemetry)."""
+    tesla = svc_map.get("Tesla Energy") or {}
+    isp = svc_map.get("Internet (ISP)") or {}
+
+    # Powerwall local API cannot report islanding without login.
+    # Heuristic: fiber up + PW up → grid; fiber down + PW up → battery; else unknown.
+    if tesla.get("status") == "ok" and isp.get("status") == "bad":
+        power = {
+            "value": "battery",
+            "label": "Battery",
+            "detail": "Fiber looks down — house may be on Powerwall",
+            "status": "warn",
+        }
+    elif tesla.get("status") == "ok":
+        power = {
+            "value": "grid",
+            "label": "Grid",
+            "detail": "Powerwall online · likely on grid power",
+            "status": "ok",
+        }
+    elif tesla.get("status") == "bad":
+        power = {
+            "value": "unknown",
+            "label": "Unknown",
+            "detail": "Powerwall not answering",
+            "status": "bad",
+        }
+    else:
+        power = {
+            "value": "unknown",
+            "label": "Unknown",
+            "detail": "Power status not available",
+            "status": "unknown",
+        }
+
+    if isp.get("status") == "ok":
+        internet = {
+            "value": "primary",
+            "label": "Fiber",
+            "detail": "Primary ISP (Fidium)",
+            "status": "ok",
+        }
+    elif isp.get("status") == "bad":
+        internet = {
+            "value": "backup",
+            "label": "Backup",
+            "detail": "Fiber check failed — Starlink standby/failover",
+            "status": "warn",
+        }
+    else:
+        internet = {
+            "value": "unknown",
+            "label": "Unknown",
+            "detail": "Internet status not available",
+            "status": "unknown",
+        }
+
+    return {"power": power, "isp": internet}
+
+
+def push_mode_history(modes: dict) -> list[dict]:
+    sample = {
+        "t": int(time.time()),
+        "power": (modes.get("power") or {}).get("value") or "unknown",
+        "isp": (modes.get("isp") or {}).get("value") or "unknown",
+    }
+    if _MODE_HISTORY and _MODE_HISTORY[-1].get("power") == sample["power"] and _MODE_HISTORY[-1].get(
+        "isp"
+    ) == sample["isp"]:
+        # Refresh timestamp on unchanged state so the chart advances.
+        _MODE_HISTORY[-1] = sample
+    else:
+        _MODE_HISTORY.append(sample)
+    del _MODE_HISTORY[:-HISTORY_MAX]
+    return list(_MODE_HISTORY)
 
 
 def enrich_ranch(svc_map: dict[str, dict]) -> dict:
@@ -275,16 +441,14 @@ def enrich_ranch(svc_map: dict[str, dict]) -> dict:
     ms = gw.get("latency_ms")
     stats = []
     if gw.get("status") == "ok":
-        stats.append({"label": "UDM", "value": "up"})
-        if ms is not None:
-            stats.append({"label": "RTT", "value": f"{ms:.0f}ms"})
-        note = "Reachable over SD-WAN mesh"
+        stats.append({"label": "Gateway", "value": "online"})
+        note = "Ranch gateway answers · no other ranch devices seen from here"
     elif gw.get("status") == "bad":
-        stats.append({"label": "UDM", "value": "down"})
-        note = gw.get("detail") or "Ranch gateway unreachable — check VPN"
+        stats.append({"label": "Gateway", "value": "offline"})
+        note = "Cannot reach the ranch gateway — VPN may be down"
     else:
-        stats.append({"label": "UDM", "value": "—"})
-        note = "Add Ranch Gateway to LAN overlay to probe"
+        stats.append({"label": "Gateway", "value": "—"})
+        note = "Ranch probe not configured"
     return {"stats": stats, "note": note, "latency_ms": ms}
 
 
@@ -292,12 +456,18 @@ def enrich_ranch_link(svc_map: dict[str, dict]) -> dict:
     gw = svc_map.get("Ranch Gateway") or {}
     unifi = svc_map.get("UniFi (LAN)") or {}
     stats = [
-        {"label": "Tunnel", "value": "ok" if gw.get("status") == "ok" else (gw.get("status") or "—")},
-        {"label": "Home GW", "value": unifi.get("status") or "—"},
+        {
+            "label": "Link",
+            "value": "up" if gw.get("status") == "ok" else (gw.get("status") or "—"),
+        },
+        {
+            "label": "Home",
+            "value": "up" if unifi.get("status") == "ok" else (unifi.get("status") or "—"),
+        },
     ]
-    note = "UniFi SD-WAN · UDM - Ranch"
+    note = "Private link from home to ranch"
     if gw.get("status") == "bad":
-        note = "Mesh tunnel path failing"
+        note = "Link to ranch looks down"
     return {"stats": stats, "note": note, "latency_ms": gw.get("latency_ms")}
 
 
@@ -347,7 +517,8 @@ def enrich_automation(svc_map: dict[str, dict]) -> dict:
 
 
 ENRICHERS = {
-    "envoy": lambda _m, _d: enrich_envoy(),
+    "envoy": lambda m, _d: enrich_solar(m),
+    "solar": lambda m, _d: enrich_solar(m),
     "tesla": lambda _m, _d: enrich_tesla(),
     "internet": lambda m, _d: enrich_internet(m),
     "pool": lambda m, _d: enrich_pool(m),
@@ -430,6 +601,25 @@ def build_home(status_payload: dict | None = None) -> dict:
             }
         )
 
+    modes = derive_modes(svc_map)
+    history = push_mode_history(modes)
+
+    # Plain-language overlays for home power/internet cards.
+    for domain in domains_out:
+        if domain.get("id") == "power" and modes.get("power"):
+            domain["stats"] = [
+                {"label": "Source", "value": modes["power"]["label"]},
+                *list(domain.get("stats") or [])[:1],
+            ]
+            domain["note"] = modes["power"].get("detail") or domain.get("note")
+            domain["mode"] = modes["power"]["value"]
+        if domain.get("id") == "internet" and modes.get("isp"):
+            domain["stats"] = [
+                {"label": "Using", "value": modes["isp"]["label"]},
+            ]
+            domain["note"] = modes["isp"].get("detail") or domain.get("note")
+            domain["mode"] = modes["isp"]["value"]
+
     by_site: dict[str, dict] = {}
     for site in sites_cfg:
         sid = site.get("id") or "home"
@@ -444,6 +634,8 @@ def build_home(status_payload: dict | None = None) -> dict:
             "issues": site_issues,
         }
 
+    weather_bundle = fetch_weather_bundle()
+
     return {
         "as_of": payload.get("as_of", time.time()),
         "sites": list(by_site.values()),
@@ -451,6 +643,12 @@ def build_home(status_payload: dict | None = None) -> dict:
         "domains": domains_out,
         "issues": issues,
         "by_site": by_site,
+        "modes": modes,
+        "history": history,
+        "weather": weather_bundle.get("weather"),
+        "quakes": weather_bundle.get("quakes") or [],
+        "weather_note": weather_bundle.get("note") or "",
+        "energy_note": "Battery % and solar kW need Tesla / Enphase / SolarEdge login. SolarEdge is not visible on the home LAN right now.",
     }
 
 

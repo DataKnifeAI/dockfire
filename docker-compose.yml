@@ -1,0 +1,29 @@
+# Local DockFire — no Rancher / Kubernetes required.
+# Usage:
+#   docker compose up --build -d
+#   open http://127.0.0.1:8080/
+#
+# Optional LAN overlay (gitignored):
+#   copy deploy/private/services.local.example.json → deploy/private/services.local.json
+
+services:
+  dockfire:
+    build: .
+    image: dockfire:local
+    container_name: dockfire-local
+    ports:
+      - "8080:8080"
+    environment:
+      DOCKFIRE_SERVICES: /usr/share/nginx/html/services.json
+      DOCKFIRE_SERVICES_LOCAL: /usr/share/nginx/html/services.local.json
+      DOCKFIRE_HOME: /usr/share/nginx/html/home.json
+      DOCKFIRE_CHECK_TIMEOUT: "2.0"
+    volumes:
+      - ./deploy/private/services.local.json:/usr/share/nginx/html/services.local.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

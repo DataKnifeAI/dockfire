@@ -220,6 +220,16 @@ a { color: var(--harbor); }
   color: var(--muted);
 }
 
+.offline-banner {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warn) 12%, var(--panel));
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
 .refresh,
 .btn {
   appearance: none;
@@ -362,30 +372,63 @@ a { color: var(--harbor); }
 
 .home-scene-wrap {
   min-height: 220px;
+  max-height: min(42vh, 340px);
+  overflow: hidden;
+  position: relative;
   background:
     radial-gradient(ellipse at 70% 15%, var(--atmosphere-1), transparent 50%),
     radial-gradient(ellipse at 15% 85%, var(--atmosphere-2), transparent 48%),
     linear-gradient(165deg, color-mix(in srgb, var(--panel-solid) 88%, #000), var(--panel-solid));
-  padding: 0.5rem 0.65rem 0.75rem;
+  padding: 0.35rem 0.45rem 0.5rem;
 }
 
 .home-scene {
   width: 100%;
-  height: auto;
-  max-height: 320px;
+  height: 100%;
+  max-height: min(40vh, 320px);
   display: block;
+  overflow: hidden;
 }
 
-.scene-ground {
+.scene-ground,
+.scene-ground-line {
+  fill: none;
   stroke: var(--line);
   stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.scene-hills {
+  fill: color-mix(in srgb, var(--ink) 6%, transparent);
+  stroke: none;
 }
 
 .scene-stroke {
   stroke: color-mix(in srgb, var(--ink) 55%, var(--line));
-  stroke-width: 2.2;
+  stroke-width: 2;
   fill: none;
   stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.scene-stroke-thick { stroke-width: 3; }
+
+.scene-wire {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 35%, var(--line));
+  stroke-width: 1.2;
+  stroke-dasharray: 2 3;
+}
+
+.scene-insulator {
+  fill: color-mix(in srgb, var(--ember) 55%, var(--panel-solid));
+  stroke: var(--ember);
+  stroke-width: 1;
+}
+
+.scene-base {
+  fill: color-mix(in srgb, var(--ink) 28%, var(--panel-solid));
+  stroke: none;
 }
 
 .scene-fill {
@@ -394,50 +437,185 @@ a { color: var(--harbor); }
   stroke-width: 1.2;
 }
 
-.scene-panel {
-  fill: color-mix(in srgb, var(--harbor) 35%, var(--panel-solid));
-  stroke: var(--harbor);
+.scene-panel-frame {
+  fill: color-mix(in srgb, var(--ink) 20%, var(--panel-solid));
+  stroke: color-mix(in srgb, var(--harbor) 50%, var(--line));
   stroke-width: 1.4;
 }
 
 .scene-gridlines {
-  stroke: color-mix(in srgb, var(--harbor) 70%, var(--ink));
-  stroke-width: 1;
+  stroke: color-mix(in srgb, var(--harbor) 55%, #fff);
+  stroke-width: 0.7;
   fill: none;
-  opacity: 0.65;
+  opacity: 0.45;
 }
 
-.scene-window {
-  fill: color-mix(in srgb, var(--harbor) 40%, var(--panel-solid));
+.scene-sun {
+  fill: color-mix(in srgb, var(--ember) 75%, #fff);
+  opacity: 0.85;
+  animation: scene-sun 5s ease-in-out infinite;
+}
+
+.scene-roof-edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ember-deep) 70%, #000);
+  stroke-width: 1.2;
+  opacity: 0.55;
+}
+
+.scene-roof-panel {
+  fill: color-mix(in srgb, var(--harbor) 40%, #0a1620);
+  stroke: var(--harbor);
+  stroke-width: 0.8;
+  opacity: 0.85;
+}
+
+.scene-chimney {
+  fill: color-mix(in srgb, var(--ink) 40%, var(--panel-solid));
   stroke: none;
 }
 
-.scene-door {
+.scene-chimney-cap {
+  fill: color-mix(in srgb, var(--ink) 55%, var(--panel-solid));
+}
+
+.scene-wall {
+  stroke: color-mix(in srgb, var(--ink) 30%, var(--line));
+  stroke-width: 1;
+}
+
+.scene-fascia {
   fill: color-mix(in srgb, var(--ember) 35%, var(--panel-solid));
   stroke: none;
 }
 
-.scene-battery {
-  fill: color-mix(in srgb, var(--ok) 45%, var(--panel-solid));
-  stroke: var(--ok);
+.scene-window {
+  fill: color-mix(in srgb, var(--harbor) 42%, var(--panel-solid));
+  stroke: color-mix(in srgb, var(--ink) 25%, var(--line));
+  stroke-width: 0.8;
+}
+
+.scene-window-mullion {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 35%, var(--panel-solid));
   stroke-width: 1;
 }
 
+.scene-door {
+  fill: color-mix(in srgb, var(--ember) 40%, var(--panel-solid));
+  stroke: color-mix(in srgb, var(--ink) 30%, var(--line));
+  stroke-width: 0.8;
+}
+
+.scene-doorknob {
+  fill: var(--ember);
+}
+
+.scene-step {
+  fill: color-mix(in srgb, var(--ink) 25%, var(--panel-solid));
+  stroke: none;
+}
+
+.scene-batt-shell { rx: 5; }
+.scene-batt-top {
+  fill: color-mix(in srgb, var(--ink) 30%, var(--panel-solid));
+  stroke: none;
+}
+.scene-battery-well {
+  fill: color-mix(in srgb, var(--panel-solid) 70%, #000);
+  stroke: color-mix(in srgb, var(--ok) 40%, var(--line));
+  stroke-width: 1;
+}
+.scene-battery-fill { stroke: none; }
+.scene-batt-mark {
+  stroke: color-mix(in srgb, var(--ink) 40%, var(--line));
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.scene-deck {
+  fill: color-mix(in srgb, var(--ink) 14%, var(--panel-solid));
+  stroke: color-mix(in srgb, var(--ink) 28%, var(--line));
+  stroke-width: 1;
+}
+.scene-deck-tile {
+  fill: color-mix(in srgb, var(--ember) 25%, var(--panel-solid));
+  stroke: none;
+}
+
 .scene-water {
-  fill: color-mix(in srgb, var(--harbor) 55%, var(--panel-solid));
   stroke: var(--harbor);
-  stroke-width: 1.5;
+  stroke-width: 1.4;
 }
 
 .scene-water-inner {
-  fill: color-mix(in srgb, var(--harbor) 25%, transparent);
+  fill: color-mix(in srgb, #fff 28%, transparent);
   stroke: none;
 }
 
+.scene-ripple {
+  fill: none;
+  stroke: color-mix(in srgb, #fff 55%, var(--harbor));
+  stroke-width: 1.1;
+  opacity: 0.7;
+  animation: scene-ripple 3.2s ease-in-out infinite;
+}
+.scene-ripple-soft {
+  opacity: 0.4;
+  animation-delay: 0.8s;
+}
+
 .scene-rack {
-  fill: color-mix(in srgb, var(--ember) 30%, var(--panel-solid));
+  fill: color-mix(in srgb, var(--ember) 22%, var(--panel-solid));
+  stroke: color-mix(in srgb, var(--ink) 25%, var(--line));
+  stroke-width: 0.7;
+}
+.scene-rack-rail {
+  fill: color-mix(in srgb, var(--ink) 35%, var(--panel-solid));
   stroke: none;
 }
+.scene-rack-face {
+  fill: color-mix(in srgb, var(--ink) 45%, var(--panel-solid));
+  stroke: none;
+}
+
+.scene-led {
+  fill: var(--unknown);
+}
+.scene-led.is-ok {
+  fill: var(--ok);
+  animation: scene-led 2.4s ease-in-out infinite;
+}
+.scene-led.is-warn {
+  fill: var(--warn);
+  animation: scene-led 1.2s ease-in-out infinite;
+}
+.scene-node[data-status="bad"] .scene-led {
+  fill: var(--bad);
+  animation: pulse-alert 1.2s ease-in-out infinite;
+}
+
+.scene-fence {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 40%, var(--line));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.scene-mini {
+  fill: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.scene-packet {
+  fill: var(--harbor);
+  opacity: 0.75;
+  animation: scene-packet 2.8s ease-in-out infinite;
+}
+.scene-packet:nth-child(2) { animation-delay: 0.7s; }
+.scene-packet:nth-child(3) { animation-delay: 1.4s; }
 
 .scene-label {
   fill: var(--ink);
@@ -482,21 +660,341 @@ a { color: var(--harbor); }
   animation: pulse-dash 9s linear infinite;
 }
 
+.scene-flow-soft {
+  stroke-width: 1.1;
+  opacity: 0.55;
+  animation-duration: 12s;
+  animation-direction: reverse;
+}
+
 .scene-flow.is-ok { stroke: color-mix(in srgb, var(--ok) 55%, var(--line)); }
 .scene-flow.is-warn { stroke: color-mix(in srgb, var(--warn) 65%, var(--line)); }
 .scene-flow.is-bad { stroke: color-mix(in srgb, var(--bad) 75%, var(--line)); animation-duration: 2.2s; }
 .scene-flow.is-unknown { stroke: var(--line); }
 
+@keyframes scene-sun {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+@keyframes scene-ripple {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.8; }
+}
+@keyframes scene-led {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes scene-packet {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.95; }
+}
+
 .home-charts {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.85rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.home-basics {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 0.7fr) minmax(0, 1.4fr);
   gap: 0.85rem;
   margin-bottom: 1.5rem;
 }
 
-.ranch-hero .home-charts,
-#view-ranch .home-charts {
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+.ranch-basics {
+  grid-template-columns: 1fr;
+}
+
+.mode-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.mode-card[data-status="ok"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.mode-card[data-status="warn"] { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+.mode-card[data-status="bad"] { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+
+.mode-kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mode-value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ember);
+  line-height: 1.05;
+}
+
+.mode-detail {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.chart-history { min-width: 0; }
+
+.history-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.history-row-label {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.history-track {
+  display: flex;
+  gap: 2px;
+  height: 0.7rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--icon-well);
+  min-width: 0;
+}
+
+.history-seg {
+  flex: 1 1 0;
+  min-width: 3px;
+  height: 100%;
+}
+
+.history-seg.is-grid { background: var(--ok); }
+.history-seg.is-battery { background: var(--warn); }
+.history-seg.is-down { background: var(--unknown); }
+
+.history-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.swatch.is-grid { background: var(--ok); }
+.swatch.is-battery { background: var(--warn); }
+.swatch.is-down { background: var(--unknown); }
+
+.services-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 1.5rem;
+}
+
+.service-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: inherit;
+  text-decoration: none;
+  font-weight: 650;
+  font-size: 0.9rem;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.service-chip:hover {
+  border-color: var(--harbor);
+  transform: translateY(-1px);
+}
+
+.service-chip img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 3px;
+  background: var(--icon-well);
+}
+
+.service-chip-name { white-space: nowrap; }
+
+.weather-hazards {
+  margin-bottom: 1.5rem;
+}
+
+.weather-live {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.weather-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 0.85rem 0.95rem;
+  min-width: 0;
+}
+
+.weather-temp {
+  margin: 0.15rem 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  color: var(--ember);
+  line-height: 1;
+}
+
+.weather-forecast {
+  margin: 0.25rem 0 0;
+  font-weight: 650;
+}
+
+.weather-meta {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.quake-list {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+}
+
+.quake-list a {
+  text-decoration: none;
+  font-weight: 650;
+}
+
+.hazards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.hazard-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 0.85rem 0.95rem;
+}
+
+.hazard-card h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+}
+
+.hazard-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.hazard-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.hazard-links a {
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.emergency {
+  margin-bottom: 1.5rem;
+}
+
+.emergency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.emergency-card {
+  border: 1px solid color-mix(in srgb, var(--bad) 28%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bad) 6%, var(--panel));
+  padding: 0.85rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.emergency-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.emergency-action {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.emergency-action a {
+  color: var(--ember);
+  text-decoration: none;
+}
+
+.emergency-detail {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.emergency-link {
+  font-size: 0.82rem;
+  font-weight: 650;
+  margin-top: 0.2rem;
+}
+
+.home-areas {
+  margin: 0.5rem 0 1.5rem;
+}
+
+.ranch-empty-hint {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
 }
 
 .chart-card {
@@ -1495,11 +1993,17 @@ a { color: var(--harbor); }
     grid-template-columns: 1fr;
   }
 
-  .home-scene {
+  .home-scene-wrap {
     max-height: 260px;
   }
 
-  .home-charts {
+  .home-scene {
+    max-height: 240px;
+  }
+
+  .home-charts,
+  .home-basics,
+  .weather-live {
     grid-template-columns: 1fr;
   }
 
@@ -1636,6 +2140,10 @@ a { color: var(--harbor); }
     transition: none;
   }
   .scene-flow,
+  .scene-sun,
+  .scene-ripple,
+  .scene-led,
+  .scene-packet,
   .scene-node[data-status="bad"] .scene-status,
   .pulse-card-dot.is-bad {
     animation: none !important;

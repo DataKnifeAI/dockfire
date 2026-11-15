@@ -1,0 +1,591 @@
+{
+  "as_of": 1794784552,
+  "sites": [
+    {
+      "id": "home",
+      "label": "Home",
+      "blurb": "A simple view of the house.",
+      "summary": {
+        "ok": 5,
+        "warn": 0,
+        "bad": 1,
+        "unknown": 0
+      },
+      "domains": [
+        {
+          "id": "solar",
+          "site": "home",
+          "label": "Solar",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Panels",
+              "value": "online"
+            }
+          ],
+          "note": "Solar gateway is up",
+          "latency_ms": null
+        },
+        {
+          "id": "power",
+          "site": "home",
+          "label": "Power",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Source",
+              "value": "Grid"
+            },
+            {
+              "label": "Battery",
+              "value": "online"
+            }
+          ],
+          "note": "House power looks normal",
+          "latency_ms": null,
+          "mode": "grid"
+        },
+        {
+          "id": "internet",
+          "site": "home",
+          "label": "Internet",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Using",
+              "value": "Fiber"
+            }
+          ],
+          "note": "Using the main internet connection",
+          "latency_ms": null,
+          "mode": "primary"
+        },
+        {
+          "id": "pool",
+          "site": "home",
+          "label": "Pool",
+          "href": "#view-automation",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Controller",
+              "value": "on"
+            }
+          ],
+          "note": "Pool controller is up",
+          "latency_ms": null
+        },
+        {
+          "id": "lab",
+          "site": "home",
+          "label": "Lab",
+          "href": "#view-infra",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Online",
+              "value": "7/7"
+            }
+          ],
+          "note": "Lab looks okay",
+          "latency_ms": null
+        },
+        {
+          "id": "automation",
+          "site": "home",
+          "label": "Home Auto",
+          "href": "#view-automation",
+          "status": "bad",
+          "members": [],
+          "stats": [
+            {
+              "label": "Lutron",
+              "value": "ok"
+            },
+            {
+              "label": "ST Hub",
+              "value": "down"
+            }
+          ],
+          "note": "SmartThings needs a look",
+          "latency_ms": null
+        }
+      ],
+      "issues": [
+        {
+          "domain": "automation",
+          "site": "home",
+          "label": "Home Auto",
+          "service": "SmartThings Hub",
+          "detail": "Hub is not answering",
+          "href": "#view-automation"
+        }
+      ]
+    },
+    {
+      "id": "ranch",
+      "label": "Ranch",
+      "blurb": "Ranch link from home. Only the ranch gateway is visible from here right now.",
+      "summary": {
+        "ok": 2,
+        "warn": 0,
+        "bad": 0,
+        "unknown": 0
+      },
+      "domains": [
+        {
+          "id": "ranch-gateway",
+          "site": "ranch",
+          "label": "Gateway",
+          "href": "#view-ranch",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Gateway",
+              "value": "online"
+            }
+          ],
+          "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+          "latency_ms": null
+        },
+        {
+          "id": "ranch-link",
+          "site": "ranch",
+          "label": "SD-WAN",
+          "href": "#view-ranch",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Link",
+              "value": "up"
+            },
+            {
+              "label": "Home",
+              "value": "up"
+            }
+          ],
+          "note": "Private link from home to ranch",
+          "latency_ms": null
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "summary": {
+    "ok": 7,
+    "warn": 0,
+    "bad": 1,
+    "unknown": 0
+  },
+  "domains": [
+    {
+      "id": "solar",
+      "site": "home",
+      "label": "Solar",
+      "href": "#view-home",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Enphase",
+          "value": "online"
+        },
+        {
+          "label": "SolarEdge",
+          "value": "not on LAN"
+        }
+      ],
+      "note": "Live kW need login \u00b7 two arrays: Enphase + SolarEdge",
+      "latency_ms": null
+    },
+    {
+      "id": "power",
+      "site": "home",
+      "label": "Power",
+      "href": "#view-home",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Source",
+          "value": "Grid"
+        },
+        {
+          "label": "Battery",
+          "value": "online"
+        }
+      ],
+      "note": "House power looks normal",
+      "latency_ms": null,
+      "mode": "grid"
+    },
+    {
+      "id": "internet",
+      "site": "home",
+      "label": "Internet",
+      "href": "#view-home",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Using",
+          "value": "Fiber"
+        }
+      ],
+      "note": "Using the main internet connection",
+      "latency_ms": null,
+      "mode": "primary"
+    },
+    {
+      "id": "pool",
+      "site": "home",
+      "label": "Pool",
+      "href": "#view-automation",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Controller",
+          "value": "on"
+        }
+      ],
+      "note": "Pool controller is up",
+      "latency_ms": null
+    },
+    {
+      "id": "lab",
+      "site": "home",
+      "label": "Lab",
+      "href": "#view-infra",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Online",
+          "value": "7/7"
+        }
+      ],
+      "note": "Lab looks okay",
+      "latency_ms": null
+    },
+    {
+      "id": "automation",
+      "site": "home",
+      "label": "Home Auto",
+      "href": "#view-automation",
+      "status": "bad",
+      "members": [],
+      "stats": [
+        {
+          "label": "Lutron",
+          "value": "ok"
+        },
+        {
+          "label": "ST Hub",
+          "value": "down"
+        }
+      ],
+      "note": "SmartThings needs a look",
+      "latency_ms": null
+    },
+    {
+      "id": "ranch-gateway",
+      "site": "ranch",
+      "label": "Gateway",
+      "href": "#view-ranch",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Gateway",
+          "value": "online"
+        }
+      ],
+      "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+      "latency_ms": null
+    },
+    {
+      "id": "ranch-link",
+      "site": "ranch",
+      "label": "SD-WAN",
+      "href": "#view-ranch",
+      "status": "ok",
+      "members": [],
+      "stats": [
+        {
+          "label": "Link",
+          "value": "up"
+        },
+        {
+          "label": "Home",
+          "value": "up"
+        }
+      ],
+      "note": "Private link from home to ranch",
+      "latency_ms": null
+    }
+  ],
+  "issues": [
+    {
+      "domain": "automation",
+      "site": "home",
+      "label": "Home Auto",
+      "service": "SmartThings Hub",
+      "detail": "Hub is not answering",
+      "href": "#view-automation"
+    }
+  ],
+  "by_site": {
+    "home": {
+      "id": "home",
+      "label": "Home",
+      "blurb": "A simple view of the house.",
+      "summary": {
+        "ok": 5,
+        "warn": 0,
+        "bad": 1,
+        "unknown": 0
+      },
+      "domains": [
+        {
+          "id": "solar",
+          "site": "home",
+          "label": "Solar",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Panels",
+              "value": "online"
+            }
+          ],
+          "note": "Solar gateway is up",
+          "latency_ms": null
+        },
+        {
+          "id": "power",
+          "site": "home",
+          "label": "Power",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Source",
+              "value": "Grid"
+            },
+            {
+              "label": "Battery",
+              "value": "online"
+            }
+          ],
+          "note": "House power looks normal",
+          "latency_ms": null,
+          "mode": "grid"
+        },
+        {
+          "id": "internet",
+          "site": "home",
+          "label": "Internet",
+          "href": "#view-home",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Using",
+              "value": "Fiber"
+            }
+          ],
+          "note": "Using the main internet connection",
+          "latency_ms": null,
+          "mode": "primary"
+        },
+        {
+          "id": "pool",
+          "site": "home",
+          "label": "Pool",
+          "href": "#view-automation",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Controller",
+              "value": "on"
+            }
+          ],
+          "note": "Pool controller is up",
+          "latency_ms": null
+        },
+        {
+          "id": "lab",
+          "site": "home",
+          "label": "Lab",
+          "href": "#view-infra",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Online",
+              "value": "7/7"
+            }
+          ],
+          "note": "Lab looks okay",
+          "latency_ms": null
+        },
+        {
+          "id": "automation",
+          "site": "home",
+          "label": "Home Auto",
+          "href": "#view-automation",
+          "status": "bad",
+          "members": [],
+          "stats": [
+            {
+              "label": "Lutron",
+              "value": "ok"
+            },
+            {
+              "label": "ST Hub",
+              "value": "down"
+            }
+          ],
+          "note": "SmartThings needs a look",
+          "latency_ms": null
+        }
+      ],
+      "issues": [
+        {
+          "domain": "automation",
+          "site": "home",
+          "label": "Home Auto",
+          "service": "SmartThings Hub",
+          "detail": "Hub is not answering",
+          "href": "#view-automation"
+        }
+      ]
+    },
+    "ranch": {
+      "id": "ranch",
+      "label": "Ranch",
+      "blurb": "Ranch link from home. Only the ranch gateway is visible from here right now.",
+      "summary": {
+        "ok": 2,
+        "warn": 0,
+        "bad": 0,
+        "unknown": 0
+      },
+      "domains": [
+        {
+          "id": "ranch-gateway",
+          "site": "ranch",
+          "label": "Gateway",
+          "href": "#view-ranch",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Gateway",
+              "value": "online"
+            }
+          ],
+          "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+          "latency_ms": null
+        },
+        {
+          "id": "ranch-link",
+          "site": "ranch",
+          "label": "SD-WAN",
+          "href": "#view-ranch",
+          "status": "ok",
+          "members": [],
+          "stats": [
+            {
+              "label": "Link",
+              "value": "up"
+            },
+            {
+              "label": "Home",
+              "value": "up"
+            }
+          ],
+          "note": "Private link from home to ranch",
+          "latency_ms": null
+        }
+      ],
+      "issues": []
+    }
+  },
+  "modes": {
+    "power": {
+      "value": "grid",
+      "label": "Grid",
+      "detail": "House power looks normal",
+      "status": "ok"
+    },
+    "isp": {
+      "value": "primary",
+      "label": "Fiber",
+      "detail": "Using the main internet connection",
+      "status": "ok"
+    }
+  },
+  "history": [
+    {
+      "t": 1794766552,
+      "power": "grid",
+      "isp": "primary"
+    },
+    {
+      "t": 1794770152,
+      "power": "grid",
+      "isp": "primary"
+    },
+    {
+      "t": 1794773752,
+      "power": "grid",
+      "isp": "backup"
+    },
+    {
+      "t": 1794777352,
+      "power": "battery",
+      "isp": "backup"
+    },
+    {
+      "t": 1794780952,
+      "power": "grid",
+      "isp": "primary"
+    },
+    {
+      "t": 1794782752,
+      "power": "grid",
+      "isp": "primary"
+    },
+    {
+      "t": 1794784552,
+      "power": "grid",
+      "isp": "primary"
+    }
+  ],
+  "weather": {
+    "name": "This Afternoon",
+    "temp": 68,
+    "unit": "F",
+    "wind": "8 mph",
+    "forecast": "Partly sunny",
+    "detail": "Partly sunny. High near 68. West wind around 8 mph."
+  },
+  "quakes": [],
+  "weather_note": "",
+  "energy_note": "Battery % and solar kW need Tesla / Enphase / SolarEdge login. SolarEdge is not visible on the home LAN right now."
+}
