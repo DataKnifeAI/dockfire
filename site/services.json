@@ -1,0 +1,76 @@
+{
+  "services": [
+    {
+      "name": "Pulseblade",
+      "kind": "monitor",
+      "description": "Agent-first infra monitor, findings, and gated remediation.",
+      "admin": "https://pulseblade.dataknife.net/",
+      "health": "https://pulseblade.dataknife.net/api/v1/health"
+    },
+    {
+      "name": "Authentik",
+      "kind": "sso",
+      "description": "Identity provider for the lab.",
+      "admin": "https://auth.dataknife.net/",
+      "health": "https://auth.dataknife.net/-/health/live/"
+    },
+    {
+      "name": "Coder",
+      "kind": "workspaces",
+      "description": "Dev and agent workspace control plane.",
+      "admin": "https://coder.dataknife.net/",
+      "health": "https://coder.dataknife.net/api/v2/buildinfo"
+    },
+    {
+      "name": "Harbor",
+      "kind": "registry",
+      "description": "Container registry for cluster images.",
+      "admin": "https://harbor.dataknife.net/",
+      "health": "https://harbor.dataknife.net/api/v2.0/health"
+    },
+    {
+      "name": "High Command",
+      "kind": "app",
+      "description": "Helldivers campaign UI.",
+      "admin": "https://hc.dataknife.net/",
+      "health": "https://hc.dataknife.net/"
+    },
+    {
+      "name": "Proxmox MCP",
+      "kind": "mcp",
+      "description": "Proxmox VE MCP surface for agents.",
+      "admin": "https://proxmox-ve-mcp.dataknife.net/",
+      "health": "https://proxmox-ve-mcp.dataknife.net/"
+    },
+    {
+      "name": "UniFi Network MCP",
+      "kind": "mcp",
+      "description": "UniFi network management MCP.",
+      "admin": "https://unifi-network-mcp.dataknife.net/",
+      "health": "https://unifi-network-mcp.dataknife.net/"
+    },
+    {
+      "name": "UniFi Protect MCP",
+      "kind": "mcp",
+      "description": "UniFi Protect MCP.",
+      "admin": "https://unifi-protect-mcp.dataknife.net/",
+      "health": "https://unifi-protect-mcp.dataknife.net/"
+    },
+    {
+      "name": "Fleetshade",
+      "kind": "agents",
+      "description": "Observe-only agent fleet status board (repo).",
+      "admin": "https://github.com/DataKnifeAI/fleetshade",
+      "health": null,
+      "linkLabel": "Open repo"
+    },
+    {
+      "name": "Helmrail",
+      "kind": "agents",
+      "description": "Rust K8s control plane for agent fleets (design).",
+      "admin": "https://github.com/DataKnifeAI/helmrail",
+      "health": null,
+      "linkLabel": "Open repo"
+    }
+  ]
+}

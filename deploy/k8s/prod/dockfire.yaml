@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dockfire
+  labels:
+    app.kubernetes.io/name: dockfire
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dockfire
+  namespace: dockfire
+  labels:
+    app: dockfire
+    app.kubernetes.io/name: dockfire
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dockfire
+  template:
+    metadata:
+      labels:
+        app: dockfire
+        app.kubernetes.io/name: dockfire
+    spec:
+      imagePullSecrets:
+        - name: harbor-registry-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+      containers:
+        - name: web
+          image: harbor.dataknife.net/library/dockfire:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run
+            - name: cache
+              mountPath: /var/cache/nginx
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dockfire
+  namespace: dockfire
+  labels:
+    app: dockfire
+spec:
+  selector:
+    app: dockfire
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dockfire
+  namespace: dockfire
+  labels:
+    app: dockfire
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: dockfire.dataknife.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dockfire
+                port:
+                  number: 80

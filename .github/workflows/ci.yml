@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  mirror:
+    name: Push to GitLab
+    uses: DataKnifeAI/github-workflows/.github/workflows/reusable-gitlab-mirror-push.yml@main
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    secrets: inherit
+    with:
+      gitlab_mirror_path: dk-raas/dkai/dockfire

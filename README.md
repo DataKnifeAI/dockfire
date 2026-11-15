@@ -14,7 +14,9 @@ Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblad
 
 ## Status
 
-Bootstrap — branding and hero landed; overview surface next.
+Internal site: <https://dockfire.dataknife.net/>
+
+Static overview surface with configurable admin deep links (`site/services.json`).
 
 ## Related
 
@@ -24,6 +26,16 @@ Bootstrap — branding and hero landed; overview surface next.
 | [fleetshade](https://github.com/DataKnifeAI/fleetshade) | Observe-only agent fleet status board |
 | [helmrail](https://github.com/DataKnifeAI/helmrail) | Rust K8s control plane for agent fleets |
 | [coldberth](https://github.com/DataKnifeAI/coldberth) | Local Hermes Agent + vLLM host bootstrap |
+
+## Deploy (prd-apps)
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+docker build -t harbor.dataknife.net/library/dockfire:$TAG -t harbor.dataknife.net/library/dockfire:latest .
+docker push harbor.dataknife.net/library/dockfire:$TAG
+docker push harbor.dataknife.net/library/dockfire:latest
+kubectl apply -f deploy/k8s/prod/dockfire.yaml
+```
 
 ## License
 

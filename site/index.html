@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dockfire — homelab health</title>
+  <meta name="description" content="High-level health overview with deep links into admin pages." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <header class="top">
+    <div class="brand">
+      <p class="brand-name">dockfire</p>
+      <p class="brand-tag">homelab health · admin deep links</p>
+    </div>
+    <div class="top-meta">
+      <span id="summary" class="summary">loading…</span>
+      <button type="button" id="refresh" class="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-strip" aria-label="Overview">
+      <img src="assets/dockfire-hero.jpg" alt="" width="1600" height="900" />
+    </section>
+
+    <section aria-labelledby="surfaces-title">
+      <div class="section-head">
+        <h1 id="surfaces-title">Surfaces</h1>
+        <p>Coarse health. Open the admin page when something is wrong.</p>
+      </div>
+      <div id="grid" class="grid" role="list"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p><a href="https://github.com/DataKnifeAI/dockfire">dockfire</a> · DataKnifeAI · internal</p>
+  </footer>
+
+  <template id="tile-template">
+    <article class="tile" role="listitem">
+      <div class="tile-top">
+        <span class="dot" data-status></span>
+        <h2 class="tile-name"></h2>
+        <span class="tile-kind"></span>
+      </div>
+      <p class="tile-desc"></p>
+      <p class="tile-probe"></p>
+      <a class="tile-link" target="_blank" rel="noopener noreferrer">Open admin</a>
+    </article>
+  </template>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
