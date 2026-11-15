@@ -14,7 +14,8 @@ Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblad
 
 ## Status
 
-Internal site: <https://dockfire.dataknife.net/>
+Internal site: <https://dockfire.dataknife.net/>  
+GitLab mirror: <https://gitlab.com/dk-raas/dkai/dockfire>
 
 Static overview surface with configurable admin deep links (`site/services.json`).
 
