@@ -1,4 +1,4 @@
-const ICON_VER = "16";
+const ICON_VER = "17";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
