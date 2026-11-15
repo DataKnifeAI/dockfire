@@ -1,37 +1,59 @@
 {
+  "sites": [
+    {
+      "id": "home",
+      "label": "Home",
+      "blurb": "Chapman Residence — solar, power, internet, pool, lab, automation."
+    },
+    {
+      "id": "ranch",
+      "label": "Ranch",
+      "blurb": "Remote site over UniFi SD-WAN mesh (UDM - Ranch)."
+    }
+  ],
   "domains": [
     {
       "id": "solar",
+      "site": "home",
       "label": "Solar",
-      "href": "#home-services",
+      "icon": "solar",
+      "href": "#view-home",
       "services": ["Enphase Envoy"],
       "enrich": "envoy"
     },
     {
       "id": "power",
+      "site": "home",
       "label": "Power",
-      "href": "#home-services",
+      "icon": "battery",
+      "href": "#view-home",
       "services": ["Tesla Energy", "PDU"],
       "enrich": "tesla"
     },
     {
       "id": "internet",
+      "site": "home",
       "label": "Internet",
-      "href": "#infra-health",
+      "icon": "grid",
+      "href": "#view-home",
       "services": ["Internet (ISP)", "UniFi (LAN)"],
       "enrich": "internet"
     },
     {
       "id": "pool",
+      "site": "home",
       "label": "Pool",
-      "href": "#home-services",
+      "icon": "pool",
+      "href": "#view-automation",
       "services": ["OmniLogic"],
       "enrich": "pool"
     },
     {
       "id": "lab",
+      "site": "home",
       "label": "Lab",
-      "href": "#local-services",
+      "icon": "rack",
+      "href": "#view-infra",
       "services": [
         "Proxmox",
         "TrueNAS",
@@ -45,10 +67,30 @@
     },
     {
       "id": "automation",
+      "site": "home",
       "label": "Home Auto",
-      "href": "#home-services",
+      "icon": "house",
+      "href": "#view-automation",
       "services": ["Lutron", "SmartThings Hub"],
       "enrich": "automation"
+    },
+    {
+      "id": "ranch-gateway",
+      "site": "ranch",
+      "label": "Gateway",
+      "icon": "house",
+      "href": "#view-ranch",
+      "services": ["Ranch Gateway"],
+      "enrich": "ranch"
+    },
+    {
+      "id": "ranch-link",
+      "site": "ranch",
+      "label": "SD-WAN",
+      "icon": "grid",
+      "href": "#view-ranch",
+      "services": ["Ranch Gateway", "UniFi (LAN)"],
+      "enrich": "ranch_link"
     }
   ]
 }

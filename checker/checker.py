@@ -262,11 +262,43 @@ def enrich_internet(svc_map: dict[str, dict]) -> dict:
     stats = []
     if ms is not None:
         stats.append({"label": "Latency", "value": f"{ms:.0f}ms"})
-    stats.append({"label": "ISP", "value": "Fidium"})
-    note = "TCP to 1.1.1.1:443"
+    stats.append({"label": "Primary", "value": "Fidium"})
+    stats.append({"label": "Backup", "value": "Starlink"})
+    note = "Fiber primary · Starlink failover WAN2"
     if isp.get("status") == "bad":
         note = isp.get("detail") or "WAN path down"
     return {"stats": stats, "note": note, "latency_ms": ms}
+
+
+def enrich_ranch(svc_map: dict[str, dict]) -> dict:
+    gw = svc_map.get("Ranch Gateway") or {}
+    ms = gw.get("latency_ms")
+    stats = []
+    if gw.get("status") == "ok":
+        stats.append({"label": "UDM", "value": "up"})
+        if ms is not None:
+            stats.append({"label": "RTT", "value": f"{ms:.0f}ms"})
+        note = "Reachable over SD-WAN mesh"
+    elif gw.get("status") == "bad":
+        stats.append({"label": "UDM", "value": "down"})
+        note = gw.get("detail") or "Ranch gateway unreachable — check VPN"
+    else:
+        stats.append({"label": "UDM", "value": "—"})
+        note = "Add Ranch Gateway to LAN overlay to probe"
+    return {"stats": stats, "note": note, "latency_ms": ms}
+
+
+def enrich_ranch_link(svc_map: dict[str, dict]) -> dict:
+    gw = svc_map.get("Ranch Gateway") or {}
+    unifi = svc_map.get("UniFi (LAN)") or {}
+    stats = [
+        {"label": "Tunnel", "value": "ok" if gw.get("status") == "ok" else (gw.get("status") or "—")},
+        {"label": "Home GW", "value": unifi.get("status") or "—"},
+    ]
+    note = "UniFi SD-WAN · UDM - Ranch"
+    if gw.get("status") == "bad":
+        note = "Mesh tunnel path failing"
+    return {"stats": stats, "note": note, "latency_ms": gw.get("latency_ms")}
 
 
 def enrich_pool(svc_map: dict[str, dict]) -> dict:
@@ -321,17 +353,33 @@ ENRICHERS = {
     "pool": lambda m, _d: enrich_pool(m),
     "lab": lambda m, d: enrich_lab(m, d.get("services") or []),
     "automation": lambda m, _d: enrich_automation(m),
+    "ranch": lambda m, _d: enrich_ranch(m),
+    "ranch_link": lambda m, _d: enrich_ranch_link(m),
 }
+
+
+def _summarize_domains(domains: list[dict]) -> dict:
+    return {
+        "ok": sum(1 for d in domains if d["status"] == "ok"),
+        "warn": sum(1 for d in domains if d["status"] == "warn"),
+        "bad": sum(1 for d in domains if d["status"] == "bad"),
+        "unknown": sum(1 for d in domains if d["status"] == "unknown"),
+    }
 
 
 def build_home(status_payload: dict | None = None) -> dict:
     payload = status_payload or check_all()
     svc_map = {s["name"]: s for s in payload.get("services", [])}
+    home_cfg = _read_json(HOME_PATH)
+    sites_cfg = home_cfg.get("sites") or [
+        {"id": "home", "label": "Home", "blurb": "Primary residence"},
+    ]
     domains_out = []
     issues = []
 
     for domain in load_home_domains():
         names = domain.get("services") or []
+        site_id = domain.get("site") or "home"
         members = []
         for name in names:
             svc = svc_map.get(name)
@@ -351,10 +399,11 @@ def build_home(status_payload: dict | None = None) -> dict:
                 issues.append(
                     {
                         "domain": domain.get("id"),
+                        "site": site_id,
                         "label": domain.get("label"),
                         "service": name,
                         "detail": svc.get("detail") or "unreachable",
-                        "href": domain.get("href") or "#infra-health",
+                        "href": domain.get("href") or "#view-infra",
                     }
                 )
 
@@ -370,6 +419,7 @@ def build_home(status_payload: dict | None = None) -> dict:
         domains_out.append(
             {
                 "id": domain.get("id"),
+                "site": site_id,
                 "label": domain.get("label"),
                 "href": domain.get("href"),
                 "status": status,
@@ -380,17 +430,27 @@ def build_home(status_payload: dict | None = None) -> dict:
             }
         )
 
-    summary = {
-        "ok": sum(1 for d in domains_out if d["status"] == "ok"),
-        "warn": sum(1 for d in domains_out if d["status"] == "warn"),
-        "bad": sum(1 for d in domains_out if d["status"] == "bad"),
-        "unknown": sum(1 for d in domains_out if d["status"] == "unknown"),
-    }
+    by_site: dict[str, dict] = {}
+    for site in sites_cfg:
+        sid = site.get("id") or "home"
+        site_domains = [d for d in domains_out if d.get("site") == sid]
+        site_issues = [i for i in issues if i.get("site") == sid]
+        by_site[sid] = {
+            "id": sid,
+            "label": site.get("label") or sid,
+            "blurb": site.get("blurb") or "",
+            "summary": _summarize_domains(site_domains),
+            "domains": site_domains,
+            "issues": site_issues,
+        }
+
     return {
         "as_of": payload.get("as_of", time.time()),
-        "summary": summary,
+        "sites": list(by_site.values()),
+        "summary": _summarize_domains(domains_out),
         "domains": domains_out,
         "issues": issues,
+        "by_site": by_site,
     }
 
 

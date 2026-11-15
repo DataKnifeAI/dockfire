@@ -28,15 +28,27 @@
       "items": [
         {
           "name": "Internet (ISP)",
-          "blurb": "Fidium fiber (AS14051) \u2014 outbound path health from the lab.",
-          "help": "WAN egress ~156.47.77.110 via Fidium. Typical latency ~8ms to 1.1.1.1; TCP check is Cloudflare :443. Sample CF download ~650 Mbps from this host.",
-          "url": "#infra-health",
+          "blurb": "Fidium fiber primary + Starlink backup (UniFi WAN2 failover).",
+          "help": "Primary WAN is Fidium. Starlink is UniFi WAN2 Backup (failover-only). TCP check is Cloudflare :443. Ranch site is a separate tab over SD-WAN.",
+          "url": "#view-home",
           "linkLabel": "See health",
           "audience": "everyone",
           "category": "Home",
           "favicon": "assets/icons/internet-favicon.png",
           "vendor": "assets/icons/internet-vendor.svg",
           "statusName": "Internet (ISP)"
+        },
+        {
+          "name": "Ranch",
+          "blurb": "Remote UDM Ranch site \u2014 high-level health over UniFi SD-WAN mesh.",
+          "help": "Tunnel name: UDM - Ranch. Open the Ranch tab for gateway + link status.",
+          "url": "#view-ranch",
+          "linkLabel": "Open Ranch",
+          "audience": "support",
+          "category": "Remote",
+          "favicon": "assets/icons/ubiquiti-favicon.png",
+          "vendor": "assets/icons/ubiquiti-vendor.svg",
+          "statusName": "Ranch Gateway"
         },
         {
           "name": "Tesla Energy",

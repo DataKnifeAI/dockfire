@@ -17,6 +17,15 @@
       "favicon": "assets/icons/ubiquiti-favicon.png",
       "vendor": "assets/icons/ubiquiti-vendor.svg",
       "check": { "host": "REPLACE_UNIFI_HOST", "port": 443 }
+    },
+    {
+      "name": "Ranch Gateway",
+      "kind": "remote",
+      "description": "Remote site UniFi gateway over SD-WAN / VPN (LAN-only host).",
+      "admin": "https://REPLACE_RANCH_GATEWAY/",
+      "favicon": "assets/icons/ubiquiti-favicon.png",
+      "vendor": "assets/icons/ubiquiti-vendor.svg",
+      "check": { "host": "REPLACE_RANCH_GATEWAY", "port": 443 }
     }
   ]
 }

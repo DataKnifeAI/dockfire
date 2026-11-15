@@ -8,10 +8,20 @@
       "entries": [
         {
           "name": "Internet (ISP)",
-          "summary": "Fidium fiber (AS14051). DockFire checks TCP to 1.1.1.1:443.",
+          "summary": "Fidium fiber primary; Starlink on UniFi WAN2 as failover-only backup.",
           "used_for": [
-            "Coarse WAN / ISP path health (~8ms latency to Cloudflare/Google DNS from lab)",
-            "If red, check UniFi WAN and Fidium before blaming lab apps"
+            "Coarse WAN path health (TCP to 1.1.1.1:443)",
+            "If red, check UniFi WAN Fiber first, then Starlink Backup",
+            "Provider contacts live on the Home tab (Fidium, Starlink, SMUD, PG&E, water, garbage)"
+          ]
+        },
+        {
+          "name": "Ranch",
+          "summary": "Remote UDM Ranch over UniFi SD-WAN mesh from Chapman Residence.",
+          "used_for": [
+            "Open the Ranch tab for gateway + tunnel high-level health",
+            "Probe is LAN-only via private overlay (Ranch Gateway)",
+            "If red, check UniFi site VPN “UDM - Ranch” before blaming ranch gear"
           ]
         },
         {

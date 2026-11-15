@@ -17,7 +17,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=17" />
+  <link rel="stylesheet" href="styles.css?v=20" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -26,20 +26,18 @@
   <div class="atmosphere" aria-hidden="true"></div>
 
   <header class="top">
-    <a class="brand" href="#top">
+    <a class="brand" href="#view-home" data-nav="home">
       <p class="brand-name">DockFire</p>
       <p class="brand-tag">home &amp; homelab</p>
     </a>
     <div class="top-meta">
-      <nav class="tabs" aria-label="Jump">
-        <a class="tab" href="#home-services">Home</a>
-        <a class="tab" href="#local-services">Lab</a>
-        <a class="tab" href="#file-shares">Shares</a>
-        <a class="tab" href="#game-servers">Games</a>
-        <a class="tab" href="#home-pulse">Pulse</a>
-        <a class="tab" href="#infra-health">Health</a>
-        <a class="tab" href="#guide">Guide</a>
-        <a class="tab" href="#org">Org</a>
+      <nav class="tabs" aria-label="Views" role="tablist">
+        <button type="button" class="tab active" role="tab" aria-selected="true" data-nav="home">Home</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="ranch">Ranch</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="favorites">Favorites</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="automation">Automation</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="infra">Infra</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="guide">Guide</button>
       </nav>
       <span id="summary" class="summary" aria-live="polite">loading…</span>
       <button type="button" id="theme-toggle" class="refresh" aria-label="Theme">Theme</button>
@@ -48,107 +46,247 @@
   </header>
 
   <main id="top">
-    <section class="hero" aria-label="Welcome">
-      <div class="hero-copy">
-        <p class="hero-kicker">DataKnifeAI</p>
-        <h1 class="hero-title">DockFire</h1>
-        <p class="hero-sub" id="hero-welcome">Home and homelab in one place — find services, check health, and jump in when something needs help.</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#home-services">Browse home</a>
-          <a class="btn ghost" href="#home-pulse">Home health</a>
+    <!-- HOME: high-level -->
+    <section id="view-home" class="view active" role="tabpanel" data-view="home" aria-label="Home overview">
+      <div class="home-hero">
+        <div class="home-hero-copy">
+          <p class="hero-kicker">DataKnifeAI</p>
+          <h1 class="hero-title">DockFire</h1>
+          <p class="hero-sub" id="hero-welcome">High-level home health — solar, power, internet, pool, lab, and automation.</p>
+          <p class="home-pulse-line" id="pulse-summary">checking…</p>
+        </div>
+        <div class="home-scene-wrap" aria-label="Home energy scene">
+          <svg class="home-scene" viewBox="0 0 640 360" role="img" aria-labelledby="scene-title">
+            <title id="scene-title">Home health scene</title>
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.55" />
+                <stop offset="100%" stop-color="transparent" />
+              </linearGradient>
+              <linearGradient id="roofGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--ember)" />
+                <stop offset="100%" stop-color="var(--ember-deep)" />
+              </linearGradient>
+            </defs>
+            <rect class="scene-sky" x="0" y="0" width="640" height="360" fill="url(#skyGrad)" />
+            <line class="scene-ground" x1="40" y1="300" x2="600" y2="300" />
+
+            <!-- Grid tower -->
+            <g id="scene-grid" class="scene-node" data-domain="internet" transform="translate(70,168)">
+              <line x1="28" y1="0" x2="28" y2="132" class="scene-stroke" />
+              <path d="M8 28 H48 M14 52 H42 M18 76 H38" class="scene-stroke" />
+              <circle class="scene-status" cx="28" cy="-8" r="6" />
+              <text class="scene-label" x="28" y="150" text-anchor="middle">Grid</text>
+              <text class="scene-stat" x="28" y="166" text-anchor="middle" data-stat="internet">—</text>
+            </g>
+
+            <!-- Solar array -->
+            <g id="scene-solar" class="scene-node" data-domain="solar" transform="translate(200,70)">
+              <rect x="0" y="18" width="88" height="48" rx="3" class="scene-panel" />
+              <path d="M0 34 H88 M0 50 H88 M22 18 V66 M44 18 V66 M66 18 V66" class="scene-gridlines" />
+              <line x1="44" y1="66" x2="44" y2="90" class="scene-stroke" />
+              <circle class="scene-status" cx="44" cy="8" r="6" />
+              <text class="scene-label" x="44" y="108" text-anchor="middle">Solar</text>
+              <text class="scene-stat" x="44" y="124" text-anchor="middle" data-stat="solar">—</text>
+            </g>
+
+            <!-- House -->
+            <g id="scene-house" class="scene-node" data-domain="automation" transform="translate(250,140)">
+              <path d="M20 70 L70 28 L120 70 Z" fill="url(#roofGrad)" class="scene-roof" />
+              <rect x="32" y="70" width="76" height="70" class="scene-fill" />
+              <rect x="48" y="92" width="18" height="22" class="scene-window" />
+              <rect x="78" y="100" width="18" height="40" class="scene-door" />
+              <circle class="scene-status" cx="70" cy="18" r="6" />
+              <text class="scene-label" x="70" y="158" text-anchor="middle">Home</text>
+              <text class="scene-stat" x="70" y="174" text-anchor="middle" data-stat="automation">—</text>
+            </g>
+
+            <!-- Powerwall -->
+            <g id="scene-power" class="scene-node" data-domain="power" transform="translate(390,188)">
+              <rect x="0" y="20" width="42" height="72" rx="4" class="scene-fill" />
+              <rect x="10" y="34" width="22" height="36" rx="2" class="scene-battery" />
+              <circle class="scene-status" cx="21" cy="10" r="6" />
+              <text class="scene-label" x="21" y="110" text-anchor="middle">Power</text>
+              <text class="scene-stat" x="21" y="126" text-anchor="middle" data-stat="power">—</text>
+            </g>
+
+            <!-- Pool -->
+            <g id="scene-pool" class="scene-node" data-domain="pool" transform="translate(460,230)">
+              <ellipse cx="48" cy="28" rx="48" ry="18" class="scene-water" />
+              <ellipse cx="48" cy="28" rx="34" ry="10" class="scene-water-inner" />
+              <circle class="scene-status" cx="48" cy="0" r="6" />
+              <text class="scene-label" x="48" y="58" text-anchor="middle">Pool</text>
+              <text class="scene-stat" x="48" y="74" text-anchor="middle" data-stat="pool">—</text>
+            </g>
+
+            <!-- Lab rack -->
+            <g id="scene-lab" class="scene-node" data-domain="lab" transform="translate(540,175)">
+              <rect x="0" y="10" width="52" height="100" rx="3" class="scene-fill" />
+              <rect x="8" y="22" width="36" height="12" class="scene-rack" />
+              <rect x="8" y="42" width="36" height="12" class="scene-rack" />
+              <rect x="8" y="62" width="36" height="12" class="scene-rack" />
+              <rect x="8" y="82" width="36" height="12" class="scene-rack" />
+              <circle class="scene-status" cx="26" cy="0" r="6" />
+              <text class="scene-label" x="26" y="128" text-anchor="middle">Lab</text>
+              <text class="scene-stat" x="26" y="144" text-anchor="middle" data-stat="lab">—</text>
+            </g>
+
+            <!-- Energy flow paths -->
+            <g class="scene-flows" fill="none">
+              <path id="flow-solar-house" class="scene-flow" d="M244 118 C 260 130, 280 145, 300 170" />
+              <path id="flow-grid-house" class="scene-flow" d="M110 220 C 170 210, 220 200, 280 200" />
+              <path id="flow-power-house" class="scene-flow" d="M390 230 C 360 220, 340 210, 330 200" />
+              <path id="flow-house-lab" class="scene-flow" d="M370 200 C 430 190, 480 185, 540 200" />
+            </g>
+          </svg>
         </div>
       </div>
-      <div class="hero-visual hero-health" id="home-pulse" aria-label="Home health">
-        <div class="pulse-head">
-          <p class="pulse-kicker">Home health</p>
-          <p class="pulse-summary" id="pulse-summary">checking…</p>
+
+      <div class="home-charts" aria-label="High-level charts">
+        <article class="chart-card">
+          <h2 class="chart-title">Health mix</h2>
+          <div class="chart-body">
+            <svg id="chart-donut" class="chart-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+            <ul class="chart-legend" id="chart-legend"></ul>
+          </div>
+        </article>
+        <article class="chart-card">
+          <h2 class="chart-title">Latency</h2>
+          <div class="chart-bars" id="chart-bars" role="img" aria-label="Latency by area"></div>
+        </article>
+        <article class="chart-card chart-card-wide">
+          <h2 class="chart-title">Areas</h2>
+          <div class="pulse-board" id="pulse-board" role="list"></div>
+        </article>
+      </div>
+
+      <section class="providers" aria-labelledby="providers-title">
+        <div class="section-head compact">
+          <h2 id="providers-title">Providers</h2>
+          <p>Local utility and ISP contacts with live health when DockFire can probe them.</p>
         </div>
-        <svg class="pulse-map" viewBox="0 0 420 260" role="img" aria-labelledby="pulse-map-title">
-          <title id="pulse-map-title">Animated home health map</title>
-          <defs>
-            <radialGradient id="pulse-glow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="var(--ember)" stop-opacity="0.35" />
-              <stop offset="100%" stop-color="var(--ember)" stop-opacity="0" />
-            </radialGradient>
-          </defs>
-          <circle class="pulse-core-glow" cx="210" cy="130" r="54" fill="url(#pulse-glow)" />
-          <g class="pulse-links" id="pulse-links"></g>
-          <g class="pulse-nodes" id="pulse-nodes"></g>
-          <circle class="pulse-core" cx="210" cy="130" r="28" />
-          <text class="pulse-core-label" x="210" y="134" text-anchor="middle">HOME</text>
-        </svg>
-        <div class="pulse-board" id="pulse-board" role="list"></div>
-        <div class="pulse-issues" id="pulse-issues" hidden>
-          <table>
-            <caption>Issues</caption>
-            <thead>
-              <tr><th>Area</th><th>Service</th><th>Detail</th></tr>
-            </thead>
-            <tbody id="pulse-issues-body"></tbody>
-          </table>
+        <div id="providers-grid" class="providers-grid" role="list"></div>
+      </section>
+
+      <div class="pulse-issues" id="pulse-issues" hidden>
+        <table>
+          <caption>Issues</caption>
+          <thead>
+            <tr><th>Area</th><th>Service</th><th>Detail</th></tr>
+          </thead>
+          <tbody id="pulse-issues-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RANCH: remote site high-level -->
+    <section id="view-ranch" class="view" role="tabpanel" data-view="ranch" aria-label="Ranch overview" hidden>
+      <div class="home-hero ranch-hero">
+        <div class="home-hero-copy">
+          <p class="hero-kicker">Remote site</p>
+          <h1 class="hero-title">Ranch</h1>
+          <p class="hero-sub" id="ranch-welcome">UDM Ranch over UniFi SD-WAN mesh from Chapman Residence.</p>
+          <p class="home-pulse-line" id="ranch-pulse-summary">checking…</p>
+        </div>
+        <div class="home-scene-wrap" aria-label="Ranch scene">
+          <svg class="home-scene" viewBox="0 0 640 300" role="img" aria-labelledby="ranch-scene-title">
+            <title id="ranch-scene-title">Ranch health scene</title>
+            <defs>
+              <linearGradient id="ranchSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--atmosphere-2)" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="transparent" />
+              </linearGradient>
+              <linearGradient id="ranchRoof" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--harbor)" />
+                <stop offset="100%" stop-color="var(--ember)" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="640" height="300" fill="url(#ranchSky)" />
+            <line class="scene-ground" x1="40" y1="250" x2="600" y2="250" />
+
+            <!-- Home hub -->
+            <g id="ranch-home-hub" class="scene-node" data-domain="ranch-link" transform="translate(90,110)">
+              <rect x="0" y="30" width="70" height="90" rx="3" class="scene-fill" />
+              <rect x="10" y="42" width="50" height="14" class="scene-rack" />
+              <rect x="10" y="64" width="50" height="14" class="scene-rack" />
+              <rect x="10" y="86" width="50" height="14" class="scene-rack" />
+              <circle class="scene-status" cx="35" cy="18" r="6" />
+              <text class="scene-label" x="35" y="140" text-anchor="middle">Home</text>
+              <text class="scene-stat" x="35" y="156" text-anchor="middle" data-stat="ranch-link">—</text>
+            </g>
+
+            <!-- Tunnel flow -->
+            <path id="flow-ranch-tunnel" class="scene-flow" d="M170 160 C 260 120, 360 120, 450 160" />
+
+            <!-- Ranch house / UDM -->
+            <g id="ranch-udm" class="scene-node" data-domain="ranch-gateway" transform="translate(460,100)">
+              <path d="M10 70 L55 28 L100 70 Z" fill="url(#ranchRoof)" class="scene-roof" />
+              <rect x="22" y="70" width="66" height="60" class="scene-fill" />
+              <rect x="36" y="88" width="16" height="18" class="scene-window" />
+              <rect x="62" y="92" width="16" height="38" class="scene-door" />
+              <circle class="scene-status" cx="55" cy="16" r="6" />
+              <text class="scene-label" x="55" y="150" text-anchor="middle">Ranch</text>
+              <text class="scene-stat" x="55" y="166" text-anchor="middle" data-stat="ranch-gateway">—</text>
+            </g>
+          </svg>
         </div>
       </div>
-    </section>
 
-    <section class="paths" aria-label="Start here" id="start-here">
-      <div class="section-head compact">
-        <h2>Start here</h2>
+      <div class="home-charts" aria-label="Ranch charts">
+        <article class="chart-card">
+          <h2 class="chart-title">Ranch health</h2>
+          <div class="chart-body">
+            <svg id="ranch-chart-donut" class="chart-donut" viewBox="0 0 120 120" aria-hidden="true"></svg>
+            <ul class="chart-legend" id="ranch-chart-legend"></ul>
+          </div>
+        </article>
+        <article class="chart-card chart-card-wide">
+          <h2 class="chart-title">Areas</h2>
+          <div class="pulse-board" id="ranch-pulse-board" role="list"></div>
+        </article>
       </div>
-      <div id="paths" class="path-grid"></div>
-    </section>
 
-    <section class="toolbar" aria-label="Find services">
-      <label class="search-wrap" for="search">
-        <span class="search-label">Search</span>
-        <input id="search" type="search" placeholder="Name, category, or what you need…" autocomplete="off" />
-      </label>
-      <div id="audience-filters" class="audience-filters" role="group" aria-label="Who is this for"></div>
-    </section>
-
-    <section id="home-services" aria-labelledby="home-title">
-      <div class="section-head">
-        <h2 id="home-title">Home</h2>
-        <p id="home-subtitle">Everyday house services — internet, power, pool, media, print.</p>
+      <div class="pulse-issues" id="ranch-pulse-issues" hidden>
+        <table>
+          <caption>Ranch issues</caption>
+          <thead>
+            <tr><th>Area</th><th>Service</th><th>Detail</th></tr>
+          </thead>
+          <tbody id="ranch-pulse-issues-body"></tbody>
+        </table>
       </div>
-      <div id="home-grid" class="launch-grid" role="list"></div>
     </section>
 
-    <section id="local-services" aria-labelledby="local-title">
+    <!-- FAVORITES -->
+    <section id="view-favorites" class="view" role="tabpanel" data-view="favorites" aria-label="Favorite services" hidden>
       <div class="section-head">
-        <h2 id="local-title">Homelab</h2>
-        <p id="local-subtitle">Cluster, storage, and operator tools.</p>
+        <h2>Favorites</h2>
+        <p>Media, shares, games, and everyday launches.</p>
       </div>
-      <div id="local-grid" class="launch-grid" role="list"></div>
-    </section>
-
-    <section id="file-shares" aria-labelledby="shares-title">
-      <div class="section-head">
-        <h2 id="shares-title">File shares</h2>
-        <p id="shares-subtitle">NFS folders on TrueNAS. Mount from Windows or Linux on the lab network.</p>
+      <div class="toolbar" aria-label="Find favorites">
+        <label class="search-wrap" for="search">
+          <span class="search-label">Search</span>
+          <input id="search" type="search" placeholder="Name, category, or what you need…" autocomplete="off" />
+        </label>
+        <div id="audience-filters" class="audience-filters" role="group" aria-label="Who is this for"></div>
       </div>
-      <div id="shares-grid" class="launch-grid" role="list"></div>
+      <div id="favorites-grid" class="launch-grid" role="list"></div>
     </section>
 
-    <section id="game-servers" aria-labelledby="games-title">
+    <!-- AUTOMATION -->
+    <section id="view-automation" class="view" role="tabpanel" data-view="automation" aria-label="Home automation" hidden>
       <div class="section-head">
-        <h2 id="games-title">Game servers</h2>
-        <p id="games-subtitle">Dedicated servers — join address and admin links.</p>
+        <h2>Home automation</h2>
+        <p>Lights, hubs, pool equipment, and house controls.</p>
       </div>
-      <div id="games-grid" class="launch-grid" role="list"></div>
+      <div id="automation-grid" class="launch-grid" role="list"></div>
     </section>
 
-    <section id="external-services" aria-labelledby="external-title">
+    <!-- INFRA -->
+    <section id="view-infra" class="view" role="tabpanel" data-view="infra" aria-label="Infrastructure health" hidden>
       <div class="section-head">
-        <h2 id="external-title">External · apps</h2>
-        <p id="external-subtitle">Browser games, tools, and DataKnifeAI org homes.</p>
-      </div>
-      <div id="external-grid" class="launch-grid" role="list"></div>
-    </section>
-
-    <section id="infra-health" aria-labelledby="infra-title">
-      <div class="section-head">
-        <h2 id="infra-title">Health</h2>
-        <p>Live reachability for home and lab surfaces. Green means the check target answers; red means it needs attention.</p>
+        <h2>Infra &amp; health</h2>
+        <p>Lab tools and detailed reachability. Green means the check target answers.</p>
       </div>
       <div class="stats" aria-label="Fleet stats" id="stats">
         <div class="stat"><span class="stat-value" id="stat-online">—</span><span class="stat-label">online</span></div>
@@ -158,29 +296,36 @@
         <div class="stat"><span class="stat-value" id="stat-checked">—</span><span class="stat-label">last check</span></div>
       </div>
       <div id="kind-filters" class="kind-filters" hidden></div>
+      <div class="section-head compact">
+        <h3>Lab services</h3>
+      </div>
+      <div id="local-grid" class="launch-grid" role="list"></div>
+      <div class="section-head compact" style="margin-top:1.5rem">
+        <h3>Health checks</h3>
+      </div>
       <div id="grid" class="grid" role="list"></div>
     </section>
 
-    <section id="guide" aria-labelledby="wiki-title">
+    <!-- GUIDE -->
+    <section id="view-guide" class="view" role="tabpanel" data-view="guide" aria-label="Guide" hidden>
       <div class="section-head">
         <h2 id="wiki-title">Guide</h2>
         <p id="wiki-intro">What each home and homelab surface is for, and how to jump in when supporting.</p>
       </div>
       <div id="wiki-body" class="wiki-body"></div>
       <ul id="wiki-notes" class="wiki-notes"></ul>
-    </section>
-
-    <section id="org" class="org-strip" aria-labelledby="org-title">
-      <div class="section-head compact">
-        <h2 id="org-title">DataKnifeAI</h2>
-        <p>DockFire is part of the DataKnifeAI lab stack. Prefer these links when you need source or mirrors.</p>
-      </div>
-      <ul class="org-links">
-        <li><a href="https://github.com/DataKnifeAI" target="_blank" rel="noopener noreferrer">GitHub org</a></li>
-        <li><a href="https://github.com/DataKnifeAI/dockfire" target="_blank" rel="noopener noreferrer">DockFire on GitHub</a></li>
-        <li><a href="https://gitlab.com/dk-raas/dkai/dockfire" target="_blank" rel="noopener noreferrer">DockFire on GitLab</a></li>
-        <li><a href="https://github.com/DataKnifeAI/pulseblade" target="_blank" rel="noopener noreferrer">Pulseblade</a></li>
-      </ul>
+      <section class="org-strip" aria-labelledby="org-title">
+        <div class="section-head compact">
+          <h2 id="org-title">DataKnifeAI</h2>
+          <p>Prefer these links when you need source or mirrors.</p>
+        </div>
+        <ul class="org-links">
+          <li><a href="https://github.com/DataKnifeAI" target="_blank" rel="noopener noreferrer">GitHub org</a></li>
+          <li><a href="https://github.com/DataKnifeAI/dockfire" target="_blank" rel="noopener noreferrer">DockFire on GitHub</a></li>
+          <li><a href="https://gitlab.com/dk-raas/dkai/dockfire" target="_blank" rel="noopener noreferrer">DockFire on GitLab</a></li>
+          <li><a href="https://github.com/DataKnifeAI/pulseblade" target="_blank" rel="noopener noreferrer">Pulseblade</a></li>
+        </ul>
+      </section>
     </section>
   </main>
 
@@ -189,7 +334,7 @@
       <strong>DockFire</strong> · DataKnifeAI ·
       <a href="https://github.com/DataKnifeAI/dockfire">GitHub</a> ·
       <a href="https://gitlab.com/dk-raas/dkai/dockfire">GitLab</a> ·
-      <code>/api/status</code>
+      <code>/api/status</code> · <code>/api/home</code>
     </p>
   </footer>
 
@@ -251,6 +396,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=17" defer></script>
+  <script src="app.js?v=20" defer></script>
 </body>
 </html>
