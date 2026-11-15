@@ -3,51 +3,31 @@ const summary = document.getElementById("summary");
 const refreshBtn = document.getElementById("refresh");
 const template = document.getElementById("tile-template");
 
-async function loadServices() {
-  const res = await fetch("services.json", { cache: "no-store" });
-  if (!res.ok) throw new Error(`services.json ${res.status}`);
+async function fetchStatus() {
+  const res = await fetch("/api/status", { cache: "no-store" });
+  if (!res.ok) throw new Error(`/api/status ${res.status}`);
   return res.json();
 }
 
-async function probe(url, timeoutMs = 4000) {
-  if (!url) return { status: "unknown", detail: "no probe" };
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      mode: "cors",
-      cache: "no-store",
-      signal: ctrl.signal,
-    });
-    if (res.ok) return { status: "ok", detail: `${res.status}` };
-    if (res.status >= 500) return { status: "bad", detail: `${res.status}` };
-    return { status: "warn", detail: `${res.status}` };
-  } catch (err) {
-    const msg = err?.name === "AbortError" ? "timeout" : "unreachable / cors";
-    return { status: "unknown", detail: msg };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function renderTile(service, probeResult) {
+function renderTile(service) {
   const node = template.content.firstElementChild.cloneNode(true);
   const dot = node.querySelector("[data-status]");
-  dot.dataset.status = probeResult.status;
+  dot.dataset.status = service.status || "unknown";
   node.querySelector(".tile-name").textContent = service.name;
   node.querySelector(".tile-kind").textContent = service.kind || "service";
   node.querySelector(".tile-desc").textContent = service.description || "";
-  node.querySelector(".tile-probe").textContent = probeResult.detail;
+
+  const bits = [service.detail || ""];
+  if (service.resolved?.length) bits.push(service.resolved.join(", "));
+  node.querySelector(".tile-probe").textContent = bits.filter(Boolean).join(" · ");
+
   const link = node.querySelector(".tile-link");
   link.href = service.admin;
   link.textContent = service.linkLabel || "Open admin";
   return node;
 }
 
-function summarize(results) {
-  const counts = { ok: 0, warn: 0, bad: 0, unknown: 0 };
-  for (const r of results) counts[r.status] = (counts[r.status] || 0) + 1;
+function summarize(counts = {}) {
   const parts = [];
   if (counts.bad) parts.push(`${counts.bad} bad`);
   if (counts.warn) parts.push(`${counts.warn} warn`);
@@ -57,19 +37,15 @@ function summarize(results) {
 }
 
 async function refresh() {
-  summary.textContent = "probing…";
+  summary.textContent = "resolving + probing…";
   refreshBtn.disabled = true;
   try {
-    const data = await loadServices();
-    const services = data.services || [];
-    const probes = await Promise.all(
-      services.map((s) => probe(s.health || s.admin))
-    );
+    const data = await fetchStatus();
     grid.replaceChildren();
-    services.forEach((service, i) => {
-      grid.appendChild(renderTile(service, probes[i]));
-    });
-    summary.textContent = summarize(probes);
+    for (const service of data.services || []) {
+      grid.appendChild(renderTile(service));
+    }
+    summary.textContent = summarize(data.counts);
   } catch (err) {
     summary.textContent = `failed: ${err.message}`;
   } finally {
