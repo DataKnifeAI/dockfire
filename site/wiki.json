@@ -1,42 +1,63 @@
 {
-  "title": "Homelab wiki",
-  "intro": "What each Dockfire surface is for. Health checks are DNS resolve + TCP from the cluster; admin links open the management UI. No credentials are stored in Dockfire.",
+  "title": "Guide — how to help",
+  "intro": "Plain-language notes for family and support. DockFire never stores passwords. Health checks are DNS + TCP from the cluster — they tell you if a page answers, not if you can log in.",
   "sections": [
+    {
+      "id": "first-steps",
+      "title": "First steps when helping",
+      "entries": [
+        {
+          "name": "1. Find the service",
+          "summary": "Use Search or Local services. Match the name someone mentioned (or the URL).",
+          "used_for": [
+            "Open the card if you just need to get in",
+            "Note the audience tag: Everyone, Support, or Admin"
+          ]
+        },
+        {
+          "name": "2. Check the status dot",
+          "summary": "Green = reachable. Red / amber = something is wrong on the path to that admin UI.",
+          "used_for": [
+            "If it is red, open Infrastructure health for detail",
+            "Then open Pulseblade for deeper findings when available"
+          ]
+        },
+        {
+          "name": "3. Sign in if asked",
+          "summary": "Most lab apps use Authentik. Start at Sign in under Local services.",
+          "used_for": [
+            "If login fails, capture the exact error before retrying forever",
+            "Do not share passwords in chat — reset through Authentik or an admin"
+          ]
+        }
+      ]
+    },
     {
       "id": "compute",
       "title": "Compute",
       "entries": [
         {
           "name": "Proxmox",
-          "summary": "Primary hypervisor cluster for VMs and LXCs.",
+          "summary": "Primary hypervisor for VMs and containers.",
           "used_for": [
-            "Run guest VMs and containers that back app workloads",
-            "Snapshots, live migration, and node maintenance",
-            "Storage attachment for guests (local / shared)"
+            "Power guests on/off and check node health",
+            "Snapshots and maintenance windows"
           ]
         },
         {
-          "name": "PegaProx",
-          "summary": "Helper UI around the Proxmox cluster.",
+          "name": "PegaProx / PDM",
+          "summary": "Helpers around the Proxmox fleet.",
           "used_for": [
-            "Faster cluster-oriented views than the stock PVE UI",
-            "Day-2 operations convenience for Proxmox hosts"
-          ]
-        },
-        {
-          "name": "Proxmox Datacenter Manager",
-          "summary": "Upstream PDM control plane for multi-node Proxmox.",
-          "used_for": [
-            "Central management across Proxmox nodes",
-            "Fleet-style visibility for the compute layer"
+            "Faster cluster views than stock PVE",
+            "Multi-node management via Datacenter Manager"
           ]
         },
         {
           "name": "iDRAC",
-          "summary": "Dell out-of-band management processors on bare-metal hosts.",
+          "summary": "Dell out-of-band boards — works even if the OS is down.",
           "used_for": [
-            "Power control, console, and hardware health when the OS is down",
-            "Firmware and hardware alerting independent of the hypervisor"
+            "Remote power and console",
+            "Hardware alerts independent of Proxmox"
           ]
         }
       ]
@@ -47,66 +68,106 @@
       "entries": [
         {
           "name": "TrueNAS",
-          "summary": "Primary NAS for datasets, shares, and block storage.",
+          "summary": "Shared files, datasets, and NAS admin.",
           "used_for": [
-            "NFS/iSCSI/SMB for clusters and workstations",
-            "Dataset snapshots and replication jobs",
-            "Backing volumes used by Kubernetes CSI where applicable"
+            "Missing shares or full pools",
+            "Snapshots and replication"
+          ]
+        },
+        {
+          "name": "File shares (NFS)",
+          "summary": "Movies, Anime, Shows, Photos, Timelapse on tn.dataknife.net.",
+          "used_for": [
+            "Linux: sudo mount -t nfs tn.dataknife.net:/mnt/SAS/<Name> /mnt/<name>",
+            "Windows: enable Services for NFS, then mount tn.dataknife.net:/mnt/SAS/<Name> Z:",
+            "Create the local folder first on Linux (mkdir). Unmount with umount / sudo umount."
+          ]
+        },
+        {
+          "name": "Brother HL-L2460DW",
+          "summary": "Network printer via AirPrint / IPP on the lab LAN.",
+          "used_for": [
+            "Linux: lpadmin -p Brother-HL-L2460DW -E -v ipp://BRW502E6685EFE7.local/ipp/print -m everywhere",
+            "Windows: Settings → Printers & scanners → Add device, or add IPP URL http://BRW502E6685EFE7.local:631/ipp/print",
+            "Admin page: http://BRW502E6685EFE7.local/"
           ]
         },
         {
           "name": "NAS / RustFS",
-          "summary": "S3-compatible object storage endpoint.",
+          "summary": "S3-compatible object storage.",
           "used_for": [
-            "App and backup object buckets",
-            "GitOps / CNPG style object destinations when configured"
+            "App buckets and backup destinations"
           ]
         },
         {
           "name": "Proxmox Backup",
-          "summary": "PBS appliance for guest and host backups.",
+          "summary": "Guest and host backup appliance.",
           "used_for": [
-            "Proxmox guest backup jobs",
-            "Retention and restore of VM/LXC images"
+            "Backup jobs and restores for VMs/LXCs"
           ]
         }
       ]
     },
     {
       "id": "kubernetes",
-      "title": "Kubernetes & platforms",
+      "title": "Platforms",
       "entries": [
         {
           "name": "Rancher",
-          "summary": "Cluster manager for RKE2 / downstream clusters.",
+          "summary": "Kubernetes cluster manager.",
           "used_for": [
-            "Create and manage Kubernetes clusters",
-            "Fleet GitOps targeting (prd-apps and friends)",
-            "Access control and cluster inventory"
+            "Cluster inventory and GitOps targets"
           ]
         },
         {
           "name": "Harbor",
-          "summary": "Private container registry.",
+          "summary": "Private container images.",
           "used_for": [
-            "Store cluster images (library/* and mirrors)",
-            "Scan and replicate images used by GitOps deploys"
+            "Image pull failures during deploys"
           ]
         },
         {
           "name": "Coder",
-          "summary": "Workspace control plane for humans and coding agents.",
+          "summary": "Browser workspaces for humans and agents.",
           "used_for": [
-            "Ephemeral or persistent IDE workspaces",
-            "Agent berths used by slashbay-style dispatch"
+            "Start or recover a workspace when someone cannot code"
           ]
         },
         {
           "name": "Authentik",
-          "summary": "SSO identity provider for lab apps.",
+          "summary": "Single sign-on for lab apps.",
           "used_for": [
-            "Single sign-on into internal UIs",
-            "OIDC/SAML for apps that support it"
+            "Login problems across many sites at once"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "game-servers",
+      "title": "Game servers",
+      "entries": [
+        {
+          "name": "Palworld",
+          "summary": "Join palworld.dataknife.net:8211 (UDP). Admin UI at https://palworld.dataknife.net/.",
+          "used_for": [
+            "Players: Join Multiplayer → direct connect + join password",
+            "Operators: admin UI basic auth (admin / admin-password) — do not share with players"
+          ]
+        },
+        {
+          "name": "Windrose",
+          "summary": "Join windrose.dataknife.net:7777 (TCP+UDP).",
+          "used_for": [
+            "Play → Connect to Server with host:port (or invite code if configured)",
+            "Operator docs: DataKnifeAI/windrose-server-k8s"
+          ]
+        },
+        {
+          "name": "Satisfactory",
+          "summary": "Join satisfactory.dataknife.net:7777 (TCP+UDP).",
+          "used_for": [
+            "Server Manager → Add Server → host + port 7777",
+            "Operator docs: DataKnifeAI/satisfactory-server-k8s"
           ]
         }
       ]
@@ -117,26 +178,18 @@
       "entries": [
         {
           "name": "Pulseblade",
-          "summary": "Agent-first infrastructure monitor with gated remediation.",
+          "summary": "Deeper findings and gated remediation.",
           "used_for": [
-            "Fleet health, findings, and change journals",
-            "MCP surface for agents; human dashboard for triage"
+            "Why a DockFire tile went red",
+            "Agent-facing MCP + human triage"
           ]
         },
         {
-          "name": "Grafana",
-          "summary": "Metrics and dashboard UI.",
+          "name": "DockFire",
+          "summary": "This page — catalog, health, and deep links.",
           "used_for": [
-            "Time-series views across hosts and clusters",
-            "Showpiece graphs for capacity and saturation"
-          ]
-        },
-        {
-          "name": "Dockfire",
-          "summary": "This page: coarse health plus deep links.",
-          "used_for": [
-            "One glance at whether admin surfaces answer TCP",
-            "Jump straight into the right UI when something is red"
+            "Find what exists and whether it answers",
+            "Jump straight into the right UI"
           ]
         }
       ]
@@ -147,26 +200,25 @@
       "entries": [
         {
           "name": "UniFi",
-          "summary": "LAN / WLAN controller (gateway or UniFi OS).",
+          "summary": "Wi-Fi / LAN controller (often LAN-only).",
           "used_for": [
-            "Wi-Fi, switching, and LAN firewall policy",
-            "Client and uplink visibility for the home/lab network"
+            "Clients offline, AP issues, LAN policy"
           ]
         },
         {
           "name": "PDU",
-          "summary": "Rack power distribution with a network management card.",
+          "summary": "Rack power outlets (LAN-only).",
           "used_for": [
-            "Outlet power state and load",
-            "Remote power cycle for stubborn hardware (carefully)"
+            "Remote power cycle — carefully, and only when asked"
           ]
         }
       ]
     }
   ],
   "notes": [
-    "Dockfire never stores passwords, tokens, or API keys.",
-    "Reachability is resolve+TCP from the cluster path — not a full app login test.",
-    "LAN-only endpoints (raw RFC1918 admin URLs) stay out of the public git tree and are mounted at deploy time when needed."
+    "DockFire never stores passwords, tokens, or API keys.",
+    "Reachability is resolve+TCP from the cluster — not a full login test.",
+    "LAN-only admin URLs stay out of public git and mount at deploy time when needed.",
+    "Prefer GitHub for public DockFire discussion; GitLab is the internal mirror."
   ]
 }

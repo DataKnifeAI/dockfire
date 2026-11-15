@@ -1,0 +1,379 @@
+{
+  "welcome": "Find what is available, open it, and see if it is healthy — for family support and operators.",
+  "paths": [
+    {
+      "id": "browse",
+      "title": "Find a service",
+      "body": "Search or browse below, then open the card.",
+      "target": "#local-services"
+    },
+    {
+      "id": "broken",
+      "title": "Something look broken?",
+      "body": "Check Infrastructure health, then open that admin page.",
+      "target": "#infra-health"
+    },
+    {
+      "id": "help",
+      "title": "Learn how to help",
+      "body": "The Guide explains what each surface is for.",
+      "target": "#guide"
+    }
+  ],
+  "sections": [
+    {
+      "id": "local",
+      "title": "Local services",
+      "subtitle": "On the home and lab network.",
+      "items": [
+        {
+          "name": "Sign in",
+          "blurb": "One login for most lab websites.",
+          "help": "If login fails, note the error and ask whoever runs Authentik.",
+          "url": "https://auth.dataknife.net/",
+          "audience": "everyone",
+          "category": "Access",
+          "favicon": "assets/icons/authentik-favicon.png",
+          "vendor": "assets/icons/authentik-vendor.svg",
+          "statusName": "Authentik"
+        },
+        {
+          "name": "Plex (lab)",
+          "blurb": "Media on the home network — movies, shows, and more.",
+          "help": "Use this when you are on the lab network. Prefer Plex (app) when away.",
+          "url": "https://tn.dataknife.net:32400/web/",
+          "audience": "everyone",
+          "category": "Media",
+          "favicon": "assets/icons/plex-favicon.png",
+          "vendor": "assets/icons/plex-vendor.svg",
+          "statusName": "Plex"
+        },
+        {
+          "name": "Brother printer",
+          "blurb": "Brother HL-L2460DW — lab network printer (AirPrint / IPP).",
+          "help": "Host: BRW502E6685EFE7.local · IPP: ipp://BRW502E6685EFE7.local/ipp/print",
+          "url": "http://BRW502E6685EFE7.local/",
+          "linkLabel": "Open printer",
+          "audience": "everyone",
+          "category": "Print",
+          "favicon": "assets/icons/brother-favicon.png",
+          "vendor": "assets/icons/brother-vendor.svg",
+          "connect": {
+            "linux": "lpadmin -p Brother-HL-L2460DW -E -v ipp://BRW502E6685EFE7.local/ipp/print -m everywhere",
+            "windows": "Settings → Printers & scanners → Add device (or Add manually → IPP URL http://BRW502E6685EFE7.local:631/ipp/print)"
+          }
+        },
+        {
+          "name": "TrueNAS",
+          "blurb": "Storage admin for pools, datasets, and apps on the NAS.",
+          "help": "For missing media libraries or full disks, start here.",
+          "url": "https://tn.dataknife.net/",
+          "audience": "support",
+          "category": "Storage",
+          "favicon": "assets/icons/truenas-favicon.png",
+          "vendor": "assets/icons/truenas-vendor.svg",
+          "statusName": "TrueNAS"
+        },
+        {
+          "name": "Object storage",
+          "blurb": "NAS / RustFS — S3-style buckets for apps and backups.",
+          "help": "If an app cannot write objects, confirm this endpoint first.",
+          "url": "https://nas.dataknife.net/",
+          "audience": "support",
+          "category": "Storage",
+          "favicon": "assets/icons/rustfs-favicon.png",
+          "vendor": "assets/icons/rustfs-vendor.svg",
+          "statusName": "NAS / RustFS"
+        },
+        {
+          "name": "Workspaces",
+          "blurb": "Coder — browser IDEs and agent berths.",
+          "help": "If a workspace will not start, check Coder then the cluster.",
+          "url": "https://coder.dataknife.net/",
+          "audience": "support",
+          "category": "Work",
+          "favicon": "assets/icons/coder-favicon.png",
+          "vendor": "assets/icons/coder-vendor.svg",
+          "statusName": "Coder"
+        },
+        {
+          "name": "Pulseblade",
+          "blurb": "Infra findings and remediation when something is wrong.",
+          "help": "Open for the story behind a red DockFire tile.",
+          "url": "https://pulseblade.dataknife.net/",
+          "audience": "support",
+          "category": "Monitor",
+          "favicon": "assets/icons/pulseblade-favicon.png",
+          "vendor": "assets/icons/pulseblade-vendor.svg",
+          "statusName": "Pulseblade"
+        },
+        {
+          "name": "Container registry",
+          "blurb": "Harbor — private images the clusters pull.",
+          "help": "Deploy failures that say image pull often start here.",
+          "url": "https://harbor.dataknife.net/",
+          "audience": "admin",
+          "category": "Platform",
+          "favicon": "assets/icons/harbor-favicon.png",
+          "vendor": "assets/icons/harbor-vendor.svg",
+          "statusName": "Harbor"
+        },
+        {
+          "name": "Kubernetes manager",
+          "blurb": "Rancher — clusters, nodes, and GitOps targets.",
+          "help": "Use when a whole cluster looks unhealthy.",
+          "url": "https://rancher.dataknife.net/",
+          "audience": "admin",
+          "category": "Platform",
+          "favicon": "assets/icons/rancher-favicon.png",
+          "vendor": "assets/icons/rancher-vendor.svg",
+          "statusName": "Rancher"
+        },
+        {
+          "name": "Proxmox",
+          "blurb": "Hypervisor for VMs and containers that back the lab.",
+          "help": "Power guests and node maintenance live here.",
+          "url": "https://pve.dataknife.net:8006/",
+          "audience": "admin",
+          "category": "Compute",
+          "favicon": "assets/icons/proxmox-favicon.png",
+          "vendor": "assets/icons/proxmox-vendor.svg",
+          "statusName": "Proxmox"
+        }
+      ]
+    },
+    {
+      "id": "shares",
+      "title": "File shares",
+      "subtitle": "NFS folders on TrueNAS (tn.dataknife.net). Lab network only.",
+      "items": [
+        {
+          "name": "Movies",
+          "blurb": "Movie library folder on TrueNAS.",
+          "help": "Path: tn.dataknife.net:/mnt/SAS/Movies",
+          "url": "https://tn.dataknife.net/",
+          "linkLabel": "Open TrueNAS",
+          "audience": "everyone",
+          "category": "Shares",
+          "favicon": "assets/icons/share-favicon.png",
+          "vendor": "assets/icons/share-vendor.svg",
+          "statusName": "TrueNAS",
+          "connect": {
+            "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Movies /mnt/movies",
+            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Movies Z:"
+          }
+        },
+        {
+          "name": "Anime",
+          "blurb": "Anime library folder on TrueNAS.",
+          "help": "Path: tn.dataknife.net:/mnt/SAS/Anime",
+          "url": "https://tn.dataknife.net/",
+          "linkLabel": "Open TrueNAS",
+          "audience": "everyone",
+          "category": "Shares",
+          "favicon": "assets/icons/share-favicon.png",
+          "vendor": "assets/icons/share-vendor.svg",
+          "statusName": "TrueNAS",
+          "connect": {
+            "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Anime /mnt/anime",
+            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Anime Z:"
+          }
+        },
+        {
+          "name": "Shows",
+          "blurb": "TV / shows library folder on TrueNAS.",
+          "help": "Path: tn.dataknife.net:/mnt/SAS/Shows",
+          "url": "https://tn.dataknife.net/",
+          "linkLabel": "Open TrueNAS",
+          "audience": "everyone",
+          "category": "Shares",
+          "favicon": "assets/icons/share-favicon.png",
+          "vendor": "assets/icons/share-vendor.svg",
+          "statusName": "TrueNAS",
+          "connect": {
+            "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Shows /mnt/shows",
+            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Shows Z:"
+          }
+        },
+        {
+          "name": "Photos",
+          "blurb": "Photo library folder on TrueNAS.",
+          "help": "Path: tn.dataknife.net:/mnt/SAS/Photos",
+          "url": "https://tn.dataknife.net/",
+          "linkLabel": "Open TrueNAS",
+          "audience": "everyone",
+          "category": "Shares",
+          "favicon": "assets/icons/share-favicon.png",
+          "vendor": "assets/icons/share-vendor.svg",
+          "statusName": "TrueNAS",
+          "connect": {
+            "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Photos /mnt/photos",
+            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Photos Z:"
+          }
+        },
+        {
+          "name": "Timelapse",
+          "blurb": "Timelapse media folder on TrueNAS.",
+          "help": "Path: tn.dataknife.net:/mnt/SAS/Timelapse",
+          "url": "https://tn.dataknife.net/",
+          "linkLabel": "Open TrueNAS",
+          "audience": "everyone",
+          "category": "Shares",
+          "favicon": "assets/icons/share-favicon.png",
+          "vendor": "assets/icons/share-vendor.svg",
+          "statusName": "TrueNAS",
+          "connect": {
+            "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Timelapse /mnt/timelapse",
+            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Timelapse Z:"
+          }
+        }
+      ]
+    },
+    {
+      "id": "games",
+      "title": "Game servers",
+      "subtitle": "Dedicated servers on the lab. Ask an admin for join passwords — never share admin credentials.",
+      "items": [
+        {
+          "name": "Palworld",
+          "blurb": "Dedicated Palworld world (Kubernetes operator).",
+          "help": "In-game: Join Multiplayer Game → direct connect. Use the join password (server-password), not admin-password.",
+          "join": "palworld.dataknife.net:8211 (UDP)",
+          "adminDetail": "https://palworld.dataknife.net/ — basic auth user admin (operators only)",
+          "url": "https://palworld.dataknife.net/",
+          "linkLabel": "Open admin",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/palworld-favicon.png",
+          "vendor": "assets/icons/palworld-vendor.svg",
+          "statusName": "Palworld"
+        },
+        {
+          "name": "Windrose",
+          "blurb": "Windrose dedicated server.",
+          "help": "In-game: Play → Connect to Server. Direct connect uses host:port; invite-code mode is operator-configured.",
+          "join": "windrose.dataknife.net:7777 (TCP + UDP)",
+          "adminDetail": "Operator docs: github.com/DataKnifeAI/windrose-server-k8s (invite code / direct-connect settings)",
+          "url": "https://github.com/DataKnifeAI/windrose-server-k8s",
+          "linkLabel": "Open docs",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/steam-favicon.png",
+          "vendor": "assets/icons/steam-vendor.svg",
+          "statusName": "Windrose"
+        },
+        {
+          "name": "Satisfactory",
+          "blurb": "Satisfactory dedicated server.",
+          "help": "In-game: Server Manager → Add Server → enter host and port 7777.",
+          "join": "satisfactory.dataknife.net:7777 (TCP + UDP)",
+          "adminDetail": "Operator docs: github.com/DataKnifeAI/satisfactory-server-k8s",
+          "url": "https://github.com/DataKnifeAI/satisfactory-server-k8s",
+          "linkLabel": "Open docs",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/steam-favicon.png",
+          "vendor": "assets/icons/steam-vendor.svg",
+          "statusName": "Satisfactory"
+        }
+      ]
+    },
+    {
+      "id": "external",
+      "title": "External · apps",
+      "subtitle": "Browser games, tools, and DataKnifeAI org homes.",
+      "items": [
+        {
+          "name": "Plex (app)",
+          "blurb": "Official Plex app — use when you are away from the lab network.",
+          "help": "Signs into the same Plex account that serves the lab libraries.",
+          "url": "https://app.plex.tv/",
+          "audience": "everyone",
+          "category": "Media",
+          "favicon": "assets/icons/plex-favicon.png",
+          "vendor": "assets/icons/plex-vendor.svg"
+        },
+        {
+          "name": "D.O.N.T. Ship",
+          "blurb": "Browser game from DataKnifeAI — Definitely Not On Time.",
+          "help": "Play at ds.dataknife.ai.",
+          "url": "https://ds.dataknife.ai",
+          "audience": "everyone",
+          "category": "Games",
+          "favicon": "assets/icons/dontship-favicon.png",
+          "vendor": "assets/icons/dontship-vendor.svg"
+        },
+        {
+          "name": "High Command",
+          "blurb": "Helldivers 2 campaign UI and live war data.",
+          "help": "Source and UI live under DataKnifeAI/high-command-ui.",
+          "url": "https://github.com/DataKnifeAI/high-command-ui",
+          "audience": "everyone",
+          "category": "Games",
+          "favicon": "assets/icons/highcommand-favicon.png",
+          "vendor": "assets/icons/highcommand-vendor.svg"
+        },
+        {
+          "name": "TimeSplice",
+          "blurb": "TimeSplitters Rewind Linux installer for CachyOS / Steam.",
+          "help": "Adds the game as a non-Steam Proton title.",
+          "url": "https://github.com/DataKnifeAI/timesplice",
+          "audience": "everyone",
+          "category": "Games",
+          "favicon": "assets/icons/steam-favicon.png",
+          "vendor": "assets/icons/steam-vendor.svg"
+        },
+        {
+          "name": "dataknife.ai",
+          "blurb": "Public project index for DataKnifeAI.",
+          "help": "Start here for the public catalog of projects.",
+          "url": "https://dataknife.ai",
+          "audience": "everyone",
+          "category": "Org",
+          "favicon": "assets/icons/dontship-favicon.png",
+          "vendor": "assets/icons/github-vendor.svg"
+        },
+        {
+          "name": "Agent Hub",
+          "blurb": "Install skills, plugins, and editor extensions for agents.",
+          "help": "Front door for Cursor / agent tooling.",
+          "url": "https://dataknifeai.github.io/agent-hub/",
+          "audience": "support",
+          "category": "Apps",
+          "favicon": "assets/icons/github-favicon.png",
+          "vendor": "assets/icons/github-vendor.svg"
+        },
+        {
+          "name": "DataKnifeAI on GitHub",
+          "blurb": "Org home for DockFire, games, and lab tooling.",
+          "help": "Browse repos and issues when you need the written source of truth.",
+          "url": "https://github.com/DataKnifeAI",
+          "audience": "everyone",
+          "category": "Org",
+          "favicon": "assets/icons/github-favicon.png",
+          "vendor": "assets/icons/github-vendor.svg"
+        },
+        {
+          "name": "DockFire on GitHub",
+          "blurb": "This site’s public repository.",
+          "help": "Open an issue if a link is wrong or a share should be listed.",
+          "url": "https://github.com/DataKnifeAI/dockfire",
+          "audience": "support",
+          "category": "Org",
+          "favicon": "assets/icons/github-favicon.png",
+          "vendor": "assets/icons/github-vendor.svg"
+        },
+        {
+          "name": "DockFire on GitLab",
+          "blurb": "Internal mirror for the lab’s GitOps path.",
+          "help": "Prefer GitHub for public discussion.",
+          "url": "https://gitlab.com/dk-raas/dkai/dockfire",
+          "audience": "admin",
+          "category": "Org",
+          "favicon": "assets/icons/gitlab-favicon.png",
+          "vendor": "assets/icons/gitlab-vendor.svg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,26 +1,29 @@
-# Dockfire
+# DockFire
 
-![Dockfire — homelab health overview and admin deep links](docs/assets/dockfire-hero.jpg)
+![DockFire — homelab central for local and external services](docs/assets/dockfire-hero.jpg)
 
-**Dockfire** — high-level health for the homelab, with deep links into the admin pages that fix what is wrong.
+**DockFire** — homelab central for all local and external services. Find what is available, see if it is healthy, and jump in to support.
 
-Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblade)) and the agent pipeline ([fleetshade](https://github.com/DataKnifeAI/fleetshade), [helmrail](https://github.com/DataKnifeAI/helmrail), [slashbay](https://github.com/DataKnifeAI/slashbay)): a human-facing overview, not another metrics firehose.
+Built for family members and operators alike: a searchable launcher (Heimdall/Dashy-style) plus live reachability for admin surfaces. Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblade)) and the agent pipeline ([fleetshade](https://github.com/DataKnifeAI/fleetshade), [helmrail](https://github.com/DataKnifeAI/helmrail), [slashbay](https://github.com/DataKnifeAI/slashbay)).
 
 ## Goals
 
-- **Health at a glance** — Proxmox, UniFi, Kubernetes, storage, and other surfaces as coarse green / amber / red
-- **Jump to fix** — each unhealthy signal links straight to the right admin UI
-- **Homelab-shaped** — self-hosted, local-first, no SaaS dashboard tax
+- **Know what exists** — Local services and org links with plain-language blurbs
+- **Jump in fast** — One click to the right UI; audience tags (Everyone / Support / Admin)
+- **Health at a glance** — Coarse green / amber / red from cluster-side DNS + TCP
+- **Homelab-shaped** — Self-hosted, local-first, no SaaS dashboard tax
 
 ## Status
 
 Internal site: <https://dockfire.dataknife.net/>  
+GitHub: <https://github.com/DataKnifeAI/dockfire>  
 GitLab mirror: <https://gitlab.com/dk-raas/dkai/dockfire>
 
-Health + wiki UI. Public catalog is hostname-based (`site/services.json`). LAN-only
-RFC1918 admin URLs live in a **gitignored** overlay — see `deploy/private/services.local.example.json`.
+- **Catalog** — `site/catalog.json` (family-facing local + external launcher)
+- **Health probes** — `site/services.json` (hostname-based; LAN overlay gitignored)
+- **Guide** — [docs/WIKI.md](docs/WIKI.md) / site Guide section
 
-Wiki: [docs/WIKI.md](docs/WIKI.md) (also rendered in the site **Wiki** tab).
+LAN-only RFC1918 admin URLs: see `deploy/private/services.local.example.json`.
 
 ## Related
 

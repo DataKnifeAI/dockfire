@@ -95,6 +95,8 @@ def check_one(service: dict) -> dict:
         "kind": service.get("kind"),
         "description": service.get("description"),
         "linkLabel": service.get("linkLabel") or "Open admin",
+        "favicon": service.get("favicon"),
+        "vendor": service.get("vendor"),
     }
 
     if not host:

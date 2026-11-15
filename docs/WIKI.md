@@ -1,52 +1,56 @@
-# Dockfire wiki
+# DockFire wiki
 
-Human-oriented notes for the surfaces shown on the internal dashboard.
+**DockFire** is the homelab central for local and external services — find what is available, check coarse health, and jump into the right admin UI. Aimed at family support as much as operators.
 
-The live site also renders this content from [`site/wiki.json`](../site/wiki.json).
+Rendered live in the site **Guide** section (same content as `site/wiki.json`).
 
-## Safety
+## First steps when helping
 
-- No passwords, tokens, or API keys belong in this repo or in Dockfire config.
-- RFC1918 admin URLs stay in a **gitignored** deploy overlay (`deploy/private/services.local.json`), not on GitHub.
-- Health checks are **DNS resolve + TCP** from the cluster path. They do not log in to apps.
+1. **Find the service** — Search or browse Local services.
+2. **Check the status dot** — Green = reachable; red/amber = open Infrastructure health, then Pulseblade if needed.
+3. **Sign in** — Most apps use Authentik (`auth.dataknife.net`).
 
 ## Compute
 
 | Surface | Used for |
 |---------|----------|
-| **Proxmox** | Hypervisor cluster for VMs/LXCs, snapshots, migration |
-| **PegaProx** | Convenience UI around the Proxmox cluster |
-| **Proxmox Datacenter Manager** | Multi-node PDM control plane |
-| **iDRAC** | Out-of-band power/console/hardware when the OS is down |
+| **Proxmox** | Hypervisor for VMs / LXCs |
+| **PegaProx / PDM** | Cluster helpers around Proxmox |
+| **iDRAC** | Dell out-of-band power / console |
 
 ## Storage & backup
 
 | Surface | Used for |
 |---------|----------|
-| **TrueNAS** | Datasets, shares, block storage, snapshots/replication |
-| **NAS / RustFS** | S3-compatible object buckets |
-| **Proxmox Backup** | Guest/host backup jobs and restores |
+| **TrueNAS** | Shares, datasets, NAS admin |
+| **NAS / RustFS** | S3-compatible object storage |
+| **Proxmox Backup** | Guest / host backup appliance |
 
-## Kubernetes & platforms
+## Platforms
 
 | Surface | Used for |
 |---------|----------|
-| **Rancher** | Manage RKE2/downstream clusters and Fleet targets |
-| **Harbor** | Private container images for GitOps |
-| **Coder** | Human and agent workspaces |
+| **Rancher** | Kubernetes cluster manager |
+| **Harbor** | Private container registry |
+| **Coder** | Dev / agent workspaces |
 | **Authentik** | SSO for internal apps |
 
 ## Observe & respond
 
 | Surface | Used for |
 |---------|----------|
-| **Pulseblade** | Findings, change journal, gated remediation, MCP |
-| **Grafana** | Metrics dashboards |
-| **Dockfire** | Coarse reachability + deep links (this app) |
+| **Pulseblade** | Findings, remediation, MCP |
+| **DockFire** | Catalog + coarse reachability + deep links |
 
 ## Network & power
 
 | Surface | Used for |
 |---------|----------|
-| **UniFi** | LAN/WLAN controller (often LAN-only) |
-| **PDU** | Rack power outlets and load (LAN-only) |
+| **UniFi** | LAN/WLAN (often LAN-only) |
+| **PDU** | Rack power (LAN-only) |
+
+## Org links
+
+- [DataKnifeAI on GitHub](https://github.com/DataKnifeAI)
+- [DockFire on GitHub](https://github.com/DataKnifeAI/dockfire)
+- [DockFire on GitLab](https://gitlab.com/dk-raas/dkai/dockfire)

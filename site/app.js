@@ -1,12 +1,22 @@
-const grid = document.getElementById("grid");
-const summary = document.getElementById("summary");
-const refreshBtn = document.getElementById("refresh");
-const template = document.getElementById("tile-template");
-const kindFilters = document.getElementById("kind-filters");
-const viewHealth = document.getElementById("view-health");
-const viewWiki = document.getElementById("view-wiki");
+const ICON_VER = "11";
 
 const els = {
+  summary: document.getElementById("summary"),
+  refresh: document.getElementById("refresh"),
+  search: document.getElementById("search"),
+  audienceFilters: document.getElementById("audience-filters"),
+  paths: document.getElementById("paths"),
+  localGrid: document.getElementById("local-grid"),
+  sharesGrid: document.getElementById("shares-grid"),
+  gamesGrid: document.getElementById("games-grid"),
+  externalGrid: document.getElementById("external-grid"),
+  localSubtitle: document.getElementById("local-subtitle"),
+  sharesSubtitle: document.getElementById("shares-subtitle"),
+  gamesSubtitle: document.getElementById("games-subtitle"),
+  externalSubtitle: document.getElementById("external-subtitle"),
+  heroWelcome: document.getElementById("hero-welcome"),
+  grid: document.getElementById("grid"),
+  kindFilters: document.getElementById("kind-filters"),
   online: document.getElementById("stat-online"),
   down: document.getElementById("stat-down"),
   latency: document.getElementById("stat-latency"),
@@ -14,30 +24,29 @@ const els = {
   checked: document.getElementById("stat-checked"),
 };
 
-let activeKind = "all";
+const templates = {
+  path: document.getElementById("path-template"),
+  launch: document.getElementById("launch-template"),
+  tile: document.getElementById("tile-template"),
+};
+
+const AUDIENCE_LABELS = {
+  all: "All",
+  everyone: "Everyone",
+  support: "Support",
+  admin: "Admin",
+};
+
+let catalog = null;
 let lastPayload = null;
+let activeAudience = "all";
+let activeKind = "all";
+let searchQuery = "";
+let statusByName = new Map();
 
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    const view = tab.dataset.view;
-    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
-    viewHealth.hidden = view !== "health";
-    viewWiki.hidden = view !== "wiki";
-    refreshBtn.hidden = view !== "health";
-    if (view === "wiki") summary.textContent = "wiki";
-    else if (lastPayload) summary.textContent = summarize(lastPayload.counts);
-  });
-});
-
-async function fetchStatus() {
-  const res = await fetch(`/api/status?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`/api/status ${res.status}`);
-  return res.json();
-}
-
-async function fetchWiki() {
-  const res = await fetch(`/wiki.json?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`/wiki.json ${res.status}`);
+async function fetchJson(path) {
+  const res = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${path} ${res.status}`);
   return res.json();
 }
 
@@ -49,6 +58,196 @@ function fmtMs(ms) {
 function fmtTime(ts) {
   if (!ts) return "—";
   return new Date(ts * 1000).toLocaleTimeString();
+}
+
+function setIcon(img, src, label, { onFail } = {}) {
+  if (!src) {
+    img.hidden = true;
+    img.removeAttribute("src");
+    return false;
+  }
+  img.hidden = false;
+  img.src = `${src}?v=${ICON_VER}`;
+  img.alt = label || "";
+  img.onerror = () => {
+    img.hidden = true;
+    onFail?.();
+  };
+  return true;
+}
+
+function matchesQuery(text) {
+  if (!searchQuery) return true;
+  return String(text || "").toLowerCase().includes(searchQuery);
+}
+
+function itemMatches(item) {
+  if (activeAudience !== "all" && item.audience !== activeAudience) return false;
+  const hay = [
+    item.name,
+    item.blurb,
+    item.help,
+    item.category,
+    item.audience,
+    item.join,
+    item.adminDetail,
+    item.connect?.linux,
+    item.connect?.windows,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return matchesQuery(hay);
+}
+
+function serviceMatches(service) {
+  if (activeKind !== "all" && service.kind !== activeKind) return false;
+  const hay = [service.name, service.description, service.kind, service.detail]
+    .filter(Boolean)
+    .join(" ");
+  return matchesQuery(hay);
+}
+
+function summarize(counts = {}) {
+  const parts = [];
+  if (counts.bad) parts.push(`${counts.bad} down`);
+  if (counts.warn) parts.push(`${counts.warn} warn`);
+  if (counts.ok) parts.push(`${counts.ok} online`);
+  if (counts.unknown) parts.push(`${counts.unknown} unknown`);
+  return parts.join(" · ") || "no surfaces yet";
+}
+
+function renderPaths(paths = []) {
+  els.paths.replaceChildren();
+  for (const path of paths) {
+    const node = templates.path.content.firstElementChild.cloneNode(true);
+    node.href = path.target || "#";
+    node.querySelector(".path-title").textContent = path.title;
+    node.querySelector(".path-body").textContent = path.body;
+    els.paths.appendChild(node);
+  }
+}
+
+function renderAudienceFilters() {
+  const options = ["all", "everyone", "support", "admin"];
+  els.audienceFilters.replaceChildren();
+  for (const key of options) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "audience-chip" + (key === activeAudience ? " active" : "");
+    btn.textContent = AUDIENCE_LABELS[key] || key;
+    btn.addEventListener("click", () => {
+      activeAudience = key;
+      renderAudienceFilters();
+      renderCatalogSections();
+    });
+    els.audienceFilters.appendChild(btn);
+  }
+}
+
+function renderLaunchCard(item) {
+  const node = templates.launch.content.firstElementChild.cloneNode(true);
+  const status = item.statusName ? statusByName.get(item.statusName) : null;
+  const dot = node.querySelector("[data-status]");
+  dot.dataset.status = status?.status || (item.statusName ? "unknown" : "external");
+
+  const vendorOk = setIcon(
+    node.querySelector(".launch-vendor"),
+    item.vendor,
+    `${item.name} vendor`,
+    { onFail: () => node.classList.add("no-vendor") }
+  );
+  if (!vendorOk) node.classList.add("no-vendor");
+  setIcon(node.querySelector(".launch-favicon"), item.favicon, "");
+
+  node.querySelector(".launch-name").textContent = item.name;
+  node.querySelector(".launch-blurb").textContent = item.blurb || "";
+  const help = node.querySelector(".launch-help");
+  if (item.help) help.textContent = item.help;
+  else help.hidden = true;
+
+  const connectBox = node.querySelector(".launch-connect");
+  const detailFields = {
+    join: item.join,
+    admin: item.adminDetail,
+    linux: item.connect?.linux,
+    windows: item.connect?.windows,
+  };
+  let hasDetails = false;
+  for (const [key, value] of Object.entries(detailFields)) {
+    const row = connectBox.querySelector(`[data-row="${key}"]`);
+    const cmd = connectBox.querySelector(`[data-field="${key}"]`);
+    if (value) {
+      row.hidden = false;
+      cmd.textContent = value;
+      hasDetails = true;
+    } else {
+      row.hidden = true;
+    }
+  }
+  connectBox.hidden = !hasDetails;
+
+  node.querySelector(".launch-category").textContent = item.category || "Service";
+  node.querySelector(".launch-audience").textContent =
+    AUDIENCE_LABELS[item.audience] || item.audience || "";
+
+  const link = node.querySelector(".launch-link");
+  if (item.url) {
+    link.href = item.url;
+    link.textContent = item.linkLabel || "Open";
+  } else {
+    link.hidden = true;
+  }
+  return node;
+}
+
+function fillLaunchGrid(container, items) {
+  container.replaceChildren();
+  const visible = items.filter(itemMatches);
+  if (!visible.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-hint";
+    empty.textContent = "Nothing matches that search or filter.";
+    container.appendChild(empty);
+    return;
+  }
+  for (const item of visible) {
+    container.appendChild(renderLaunchCard(item));
+  }
+}
+
+function sectionById(id) {
+  return (catalog?.sections || []).find((s) => s.id === id);
+}
+
+function renderCatalogSections() {
+  const local = sectionById("local");
+  const shares = sectionById("shares");
+  const games = sectionById("games");
+  const external = sectionById("external");
+  if (local) {
+    if (local.subtitle) els.localSubtitle.textContent = local.subtitle;
+    fillLaunchGrid(els.localGrid, local.items || []);
+  }
+  if (shares) {
+    if (shares.subtitle) els.sharesSubtitle.textContent = shares.subtitle;
+    fillLaunchGrid(els.sharesGrid, shares.items || []);
+  }
+  if (games) {
+    if (games.subtitle) els.gamesSubtitle.textContent = games.subtitle;
+    fillLaunchGrid(els.gamesGrid, games.items || []);
+  }
+  if (external) {
+    if (external.subtitle) els.externalSubtitle.textContent = external.subtitle;
+    fillLaunchGrid(els.externalGrid, external.items || []);
+  }
+}
+
+function renderCatalog(data) {
+  catalog = data;
+  if (data.welcome) els.heroWelcome.textContent = data.welcome;
+  renderPaths(data.paths || []);
+  renderAudienceFilters();
+  renderCatalogSections();
 }
 
 function renderStats(data) {
@@ -69,8 +268,8 @@ function renderStats(data) {
   els.checked.textContent = fmtTime(data.as_of);
 
   const ordered = ["all", ...[...kinds].sort()];
-  kindFilters.hidden = ordered.length <= 2;
-  kindFilters.replaceChildren();
+  els.kindFilters.hidden = ordered.length <= 2;
+  els.kindFilters.replaceChildren();
   for (const kind of ordered) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -81,14 +280,22 @@ function renderStats(data) {
       renderGrid(lastPayload);
       renderStats(lastPayload);
     });
-    kindFilters.appendChild(btn);
+    els.kindFilters.appendChild(btn);
   }
 }
 
 function renderTile(service) {
-  const node = template.content.firstElementChild.cloneNode(true);
+  const node = templates.tile.content.firstElementChild.cloneNode(true);
   const dot = node.querySelector("[data-status]");
   dot.dataset.status = service.status || "unknown";
+  const vendorOk = setIcon(
+    node.querySelector(".tile-vendor"),
+    service.vendor,
+    `${service.name} vendor`,
+    { onFail: () => node.classList.add("no-vendor") }
+  );
+  if (!vendorOk) node.classList.add("no-vendor");
+  setIcon(node.querySelector(".tile-favicon"), service.favicon, "");
   node.querySelector(".tile-name").textContent = service.name;
   node.querySelector(".tile-kind").textContent = service.kind || "service";
   node.querySelector(".tile-desc").textContent = service.description || "";
@@ -104,30 +311,35 @@ function renderTile(service) {
 }
 
 function renderGrid(data) {
-  const services = (data?.services || []).filter(
-    (s) => activeKind === "all" || s.kind === activeKind
-  );
-  grid.replaceChildren();
+  const services = (data?.services || []).filter(serviceMatches);
+  els.grid.replaceChildren();
+  if (!services.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-hint";
+    empty.textContent = "No infrastructure tiles match that search.";
+    els.grid.appendChild(empty);
+    return;
+  }
   for (const service of services) {
-    grid.appendChild(renderTile(service));
+    els.grid.appendChild(renderTile(service));
   }
 }
 
 function renderWiki(wiki) {
-  document.getElementById("wiki-title").textContent = wiki.title || "Wiki";
+  document.getElementById("wiki-title").textContent = wiki.title || "Guide";
   document.getElementById("wiki-intro").textContent = wiki.intro || "";
   const body = document.getElementById("wiki-body");
   body.replaceChildren();
   for (const section of wiki.sections || []) {
     const block = document.createElement("article");
     block.className = "wiki-section";
-    const h = document.createElement("h2");
+    const h = document.createElement("h3");
     h.textContent = section.title;
     block.appendChild(h);
     for (const entry of section.entries || []) {
       const item = document.createElement("div");
       item.className = "wiki-entry";
-      const name = document.createElement("h3");
+      const name = document.createElement("h4");
       name.textContent = entry.name;
       const summary = document.createElement("p");
       summary.className = "wiki-summary";
@@ -152,38 +364,44 @@ function renderWiki(wiki) {
   }
 }
 
-function summarize(counts = {}) {
-  const parts = [];
-  if (counts.bad) parts.push(`${counts.bad} bad`);
-  if (counts.warn) parts.push(`${counts.warn} warn`);
-  if (counts.ok) parts.push(`${counts.ok} ok`);
-  if (counts.unknown) parts.push(`${counts.unknown} unknown`);
-  return parts.join(" · ") || "no surfaces";
-}
-
 async function refresh() {
-  summary.textContent = "resolving + probing…";
-  refreshBtn.disabled = true;
+  els.summary.textContent = "checking lab…";
+  els.refresh.disabled = true;
   try {
-    const data = await fetchStatus();
+    const data = await fetchJson("/api/status");
     lastPayload = data;
+    statusByName = new Map((data.services || []).map((s) => [s.name, s]));
     renderStats(data);
     renderGrid(data);
-    if (!viewHealth.hidden) summary.textContent = summarize(data.counts);
+    renderCatalogSections();
+    els.summary.textContent = summarize(data.counts);
   } catch (err) {
-    summary.textContent = `failed: ${err.message}`;
+    els.summary.textContent = `health check failed: ${err.message}`;
     console.error(err);
   } finally {
-    refreshBtn.disabled = false;
+    els.refresh.disabled = false;
   }
 }
 
-fetchWiki()
-  .then(renderWiki)
+els.search.addEventListener("input", () => {
+  searchQuery = els.search.value.trim().toLowerCase();
+  renderCatalogSections();
+  if (lastPayload) renderGrid(lastPayload);
+});
+
+els.refresh.addEventListener("click", refresh);
+
+fetchJson("/catalog.json")
+  .then(renderCatalog)
   .catch((err) => {
-    document.getElementById("wiki-intro").textContent = `Wiki failed to load: ${err.message}`;
+    els.heroWelcome.textContent = `Catalog failed to load: ${err.message}`;
   });
 
-refreshBtn.addEventListener("click", refresh);
+fetchJson("/wiki.json")
+  .then(renderWiki)
+  .catch((err) => {
+    document.getElementById("wiki-intro").textContent = `Guide failed to load: ${err.message}`;
+  });
+
 refresh();
 setInterval(refresh, 60_000);

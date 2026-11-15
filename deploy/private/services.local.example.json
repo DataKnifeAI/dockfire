@@ -5,6 +5,8 @@
       "kind": "power",
       "description": "Rack PDU network management card (LAN-only).",
       "admin": "https://REPLACE_PDU_HOST/",
+      "favicon": "assets/icons/apc-favicon.png",
+      "vendor": "assets/icons/apc-vendor.svg",
       "check": { "host": "REPLACE_PDU_HOST", "port": 443 }
     },
     {
@@ -12,6 +14,8 @@
       "kind": "network",
       "description": "Local UniFi OS gateway (LAN-only).",
       "admin": "https://REPLACE_UNIFI_HOST/",
+      "favicon": "assets/icons/ubiquiti-favicon.png",
+      "vendor": "assets/icons/ubiquiti-vendor.svg",
       "check": { "host": "REPLACE_UNIFI_HOST", "port": 443 }
     }
   ]
