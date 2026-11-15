@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dockfire — homelab health</title>
   <meta name="description" content="High-level health overview with deep links into admin pages." />
-  <link rel="stylesheet" href="styles.css" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <link rel="stylesheet" href="styles.css?v=3" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -25,20 +26,29 @@
 
   <main>
     <section class="hero-strip" aria-label="Overview">
-      <img src="assets/dockfire-hero.jpg" alt="" width="1600" height="900" />
+      <img src="assets/dockfire-hero.jpg?v=3" alt="" width="1600" height="900" />
+    </section>
+
+    <section class="stats" aria-label="Fleet stats" id="stats">
+      <div class="stat"><span class="stat-value" id="stat-online">—</span><span class="stat-label">online</span></div>
+      <div class="stat"><span class="stat-value" id="stat-down">—</span><span class="stat-label">down</span></div>
+      <div class="stat"><span class="stat-value" id="stat-latency">—</span><span class="stat-label">avg latency</span></div>
+      <div class="stat"><span class="stat-value" id="stat-kinds">—</span><span class="stat-label">kinds</span></div>
+      <div class="stat"><span class="stat-value" id="stat-checked">—</span><span class="stat-label">last check</span></div>
     </section>
 
     <section aria-labelledby="surfaces-title">
       <div class="section-head">
         <h1 id="surfaces-title">Local infra</h1>
-        <p>DNS resolve + TCP check from the cluster. Open the admin page when something is wrong.</p>
+        <p>Cluster-side DNS resolve + TCP check. Open the admin page when something is wrong.</p>
       </div>
+      <div id="kind-filters" class="kind-filters" hidden></div>
       <div id="grid" class="grid" role="list"></div>
     </section>
   </main>
 
   <footer class="foot">
-    <p><a href="https://github.com/DataKnifeAI/dockfire">dockfire</a> · DataKnifeAI · internal</p>
+    <p><a href="https://github.com/DataKnifeAI/dockfire">dockfire</a> · DataKnifeAI · internal · checks via <code>/api/status</code></p>
   </footer>
 
   <template id="tile-template">
@@ -49,11 +59,15 @@
         <span class="tile-kind"></span>
       </div>
       <p class="tile-desc"></p>
+      <div class="tile-metrics">
+        <span class="metric" data-metric="latency"></span>
+        <span class="metric" data-metric="resolved"></span>
+      </div>
       <p class="tile-probe"></p>
       <a class="tile-link" target="_blank" rel="noopener noreferrer">Open admin</a>
     </article>
   </template>
 
-  <script src="app.js" type="module"></script>
+  <script src="app.js?v=3" defer></script>
 </body>
 </html>
