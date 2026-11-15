@@ -2,7 +2,7 @@
 
 ![DockFire — homelab central for local and external services](docs/assets/dockfire-hero.jpg)
 
-**DockFire** — homelab central for all local and external services. Find what is available, see if it is healthy, and jump in to support.
+**DockFire** — home and homelab services and health. Find what is available, see if it is healthy, and jump in to support.
 
 Built for family members and operators alike: a searchable launcher (Heimdall/Dashy-style) plus live reachability for admin surfaces. Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblade)) and the agent pipeline ([fleetshade](https://github.com/DataKnifeAI/fleetshade), [helmrail](https://github.com/DataKnifeAI/helmrail), [slashbay](https://github.com/DataKnifeAI/slashbay)).
 

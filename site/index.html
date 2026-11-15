@@ -1,12 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="system">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DockFire — homelab central</title>
-  <meta name="description" content="DockFire is the homelab central for local and external services — find what is available, check health, and jump in to help." />
+  <title>DockFire — home &amp; homelab</title>
+  <meta name="description" content="DockFire covers home and homelab services and health — find what is available, check status, and jump in to help." />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <link rel="stylesheet" href="styles.css?v=11" />
+  <script>
+    (function () {
+      try {
+        var mode = localStorage.getItem("dockfire-theme") || "system";
+        if (mode !== "light" && mode !== "dark" && mode !== "system") mode = "system";
+        document.documentElement.setAttribute("data-theme", mode);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css?v=16" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -17,18 +28,21 @@
   <header class="top">
     <a class="brand" href="#top">
       <p class="brand-name">DockFire</p>
-      <p class="brand-tag">homelab central</p>
+      <p class="brand-tag">home &amp; homelab</p>
     </a>
     <div class="top-meta">
       <nav class="tabs" aria-label="Jump">
-        <a class="tab" href="#local-services">Services</a>
+        <a class="tab" href="#home-services">Home</a>
+        <a class="tab" href="#local-services">Lab</a>
         <a class="tab" href="#file-shares">Shares</a>
         <a class="tab" href="#game-servers">Games</a>
+        <a class="tab" href="#home-pulse">Pulse</a>
         <a class="tab" href="#infra-health">Health</a>
         <a class="tab" href="#guide">Guide</a>
         <a class="tab" href="#org">Org</a>
       </nav>
       <span id="summary" class="summary" aria-live="polite">loading…</span>
+      <button type="button" id="theme-toggle" class="refresh" aria-label="Theme">Theme</button>
       <button type="button" id="refresh" class="refresh">Refresh</button>
     </div>
   </header>
@@ -38,14 +52,41 @@
       <div class="hero-copy">
         <p class="hero-kicker">DataKnifeAI</p>
         <h1 class="hero-title">DockFire</h1>
-        <p class="hero-sub" id="hero-welcome">Find what is available, open it, and see if it is healthy.</p>
+        <p class="hero-sub" id="hero-welcome">Home and homelab in one place — find services, check health, and jump in when something needs help.</p>
         <div class="hero-actions">
-          <a class="btn primary" href="#local-services">Browse services</a>
-          <a class="btn ghost" href="#infra-health">Check health</a>
+          <a class="btn primary" href="#home-services">Browse home</a>
+          <a class="btn ghost" href="#home-pulse">Home health</a>
         </div>
       </div>
-      <div class="hero-visual">
-        <img src="assets/dockfire-hero.jpg?v=11" alt="" width="1280" height="720" />
+      <div class="hero-visual hero-health" id="home-pulse" aria-label="Home health">
+        <div class="pulse-head">
+          <p class="pulse-kicker">Home health</p>
+          <p class="pulse-summary" id="pulse-summary">checking…</p>
+        </div>
+        <svg class="pulse-map" viewBox="0 0 420 260" role="img" aria-labelledby="pulse-map-title">
+          <title id="pulse-map-title">Animated home health map</title>
+          <defs>
+            <radialGradient id="pulse-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="var(--ember)" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="var(--ember)" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <circle class="pulse-core-glow" cx="210" cy="130" r="54" fill="url(#pulse-glow)" />
+          <g class="pulse-links" id="pulse-links"></g>
+          <g class="pulse-nodes" id="pulse-nodes"></g>
+          <circle class="pulse-core" cx="210" cy="130" r="28" />
+          <text class="pulse-core-label" x="210" y="134" text-anchor="middle">HOME</text>
+        </svg>
+        <div class="pulse-board" id="pulse-board" role="list"></div>
+        <div class="pulse-issues" id="pulse-issues" hidden>
+          <table>
+            <caption>Issues</caption>
+            <thead>
+              <tr><th>Area</th><th>Service</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="pulse-issues-body"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -64,10 +105,18 @@
       <div id="audience-filters" class="audience-filters" role="group" aria-label="Who is this for"></div>
     </section>
 
+    <section id="home-services" aria-labelledby="home-title">
+      <div class="section-head">
+        <h2 id="home-title">Home</h2>
+        <p id="home-subtitle">Everyday house services — internet, power, pool, media, print.</p>
+      </div>
+      <div id="home-grid" class="launch-grid" role="list"></div>
+    </section>
+
     <section id="local-services" aria-labelledby="local-title">
       <div class="section-head">
-        <h2 id="local-title">Local services</h2>
-        <p id="local-subtitle">On the home and lab network.</p>
+        <h2 id="local-title">Homelab</h2>
+        <p id="local-subtitle">Cluster, storage, and operator tools.</p>
       </div>
       <div id="local-grid" class="launch-grid" role="list"></div>
     </section>
@@ -98,8 +147,8 @@
 
     <section id="infra-health" aria-labelledby="infra-title">
       <div class="section-head">
-        <h2 id="infra-title">Infrastructure health</h2>
-        <p>Live reachability from the cluster. Green means the admin page answers; red means it needs attention.</p>
+        <h2 id="infra-title">Health</h2>
+        <p>Live reachability for home and lab surfaces. Green means the check target answers; red means it needs attention.</p>
       </div>
       <div class="stats" aria-label="Fleet stats" id="stats">
         <div class="stat"><span class="stat-value" id="stat-online">—</span><span class="stat-label">online</span></div>
@@ -115,7 +164,7 @@
     <section id="guide" aria-labelledby="wiki-title">
       <div class="section-head">
         <h2 id="wiki-title">Guide</h2>
-        <p id="wiki-intro">What each surface is for, and how to jump in when supporting the lab.</p>
+        <p id="wiki-intro">What each home and homelab surface is for, and how to jump in when supporting.</p>
       </div>
       <div id="wiki-body" class="wiki-body"></div>
       <ul id="wiki-notes" class="wiki-notes"></ul>
@@ -202,6 +251,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=11" defer></script>
+  <script src="app.js?v=16" defer></script>
 </body>
 </html>

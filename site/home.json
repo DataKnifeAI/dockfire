@@ -1,0 +1,54 @@
+{
+  "domains": [
+    {
+      "id": "solar",
+      "label": "Solar",
+      "href": "#home-services",
+      "services": ["Enphase Envoy"],
+      "enrich": "envoy"
+    },
+    {
+      "id": "power",
+      "label": "Power",
+      "href": "#home-services",
+      "services": ["Tesla Energy", "PDU"],
+      "enrich": "tesla"
+    },
+    {
+      "id": "internet",
+      "label": "Internet",
+      "href": "#infra-health",
+      "services": ["Internet (ISP)", "UniFi (LAN)"],
+      "enrich": "internet"
+    },
+    {
+      "id": "pool",
+      "label": "Pool",
+      "href": "#home-services",
+      "services": ["OmniLogic"],
+      "enrich": "pool"
+    },
+    {
+      "id": "lab",
+      "label": "Lab",
+      "href": "#local-services",
+      "services": [
+        "Proxmox",
+        "TrueNAS",
+        "Rancher",
+        "Harbor",
+        "Authentik",
+        "Coder",
+        "Pulseblade"
+      ],
+      "enrich": "lab"
+    },
+    {
+      "id": "automation",
+      "label": "Home Auto",
+      "href": "#home-services",
+      "services": ["Lutron", "SmartThings Hub"],
+      "enrich": "automation"
+    }
+  ]
+}

@@ -1,7 +1,46 @@
 {
   "title": "Guide — how to help",
-  "intro": "Plain-language notes for family and support. DockFire never stores passwords. Health checks are DNS + TCP from the cluster — they tell you if a page answers, not if you can log in.",
+  "intro": "Home and homelab notes for family and support. DockFire never stores passwords. Health checks are DNS + TCP from the cluster — they tell you if a target answers, not if you can log in.",
   "sections": [
+    {
+      "id": "home",
+      "title": "Home",
+      "entries": [
+        {
+          "name": "Internet (ISP)",
+          "summary": "Fidium fiber (AS14051). DockFire checks TCP to 1.1.1.1:443.",
+          "used_for": [
+            "Coarse WAN / ISP path health (~8ms latency to Cloudflare/Google DNS from lab)",
+            "If red, check UniFi WAN and Fidium before blaming lab apps"
+          ]
+        },
+        {
+          "name": "Tesla Energy",
+          "summary": "Powerwall gateway at tesla.dataknife.net.",
+          "used_for": [
+            "Open the local Powerwall UI when on the house network",
+            "Live SoC/meter JSON needs token — Tesla app or Fleet API; core HA Tesla integration was removed"
+          ]
+        },
+        {
+          "name": "Enphase Envoy",
+          "summary": "Solar gateway at envoy.local — official HA enphase_envoy integration.",
+          "used_for": [
+            "Confirm Envoy is up (HTTPS answers)",
+            "Production stats via HA or Envoy token"
+          ]
+        },
+        {
+          "name": "Pool · WaterGuru / Hayward",
+          "summary": "WaterGuru is cloud-only; OmniLogic is on omnilogic.local (UDP 10444 local API).",
+          "used_for": [
+            "WaterGuru HA: igorek24/waterguru-home-assistant (cloud account)",
+            "Hayward HA cloud: built-in omnilogic; local: cryptk/haomnilogic-local",
+            "DockFire TCP health cannot probe OmniLogic UDP yet"
+          ]
+        }
+      ]
+    },
     {
       "id": "first-steps",
       "title": "First steps when helping",

@@ -1,6 +1,60 @@
 {
   "services": [
     {
+      "name": "Internet (ISP)",
+      "kind": "home",
+      "description": "Outbound internet path (Fidium / Cloudflare DNS TCP).",
+      "admin": "https://one.one.one.one/",
+      "favicon": "assets/icons/internet-favicon.png",
+      "vendor": "assets/icons/internet-vendor.svg",
+      "check": { "host": "1.1.1.1", "port": 443 }
+    },
+    {
+      "name": "Tesla Energy",
+      "kind": "home",
+      "description": "Tesla Powerwall local gateway UI.",
+      "admin": "https://tesla.dataknife.net/",
+      "favicon": "assets/icons/tesla-favicon.png",
+      "vendor": "assets/icons/tesla-vendor.svg",
+      "check": { "host": "tesla.dataknife.net", "port": 443 }
+    },
+    {
+      "name": "Enphase Envoy",
+      "kind": "home",
+      "description": "Enphase solar Envoy local gateway.",
+      "admin": "https://envoy.local/",
+      "favicon": "assets/icons/enphase-favicon.png",
+      "vendor": "assets/icons/enphase-vendor.svg",
+      "check": { "host": "envoy.local", "port": 443 }
+    },
+    {
+      "name": "OmniLogic",
+      "kind": "home",
+      "description": "Hayward OmniLogic pool controller (LAN / UDP API).",
+      "admin": "https://github.com/cryptk/haomnilogic-local",
+      "favicon": "assets/icons/pool-favicon.png",
+      "vendor": "assets/icons/pool-vendor.svg",
+      "check": { "host": "omnilogic.local", "port": 10444, "mode": "dns" }
+    },
+    {
+      "name": "Lutron",
+      "kind": "home",
+      "description": "Lutron Smart Bridge (LEAP).",
+      "admin": "https://Lutron-01f3741d.local/",
+      "favicon": "assets/icons/lutron-favicon.png",
+      "vendor": "assets/icons/lutron-vendor.svg",
+      "check": { "host": "Lutron-01f3741d.local", "port": 8081 }
+    },
+    {
+      "name": "SmartThings Hub",
+      "kind": "home",
+      "description": "Samsung SmartThings hub v3.",
+      "admin": "https://hubv3-03011283166.local/",
+      "favicon": "assets/icons/smartthings-favicon.png",
+      "vendor": "assets/icons/smartthings-vendor.svg",
+      "check": { "host": "hubv3-03011283166.local", "port": 8081 }
+    },
+    {
       "name": "Proxmox",
       "kind": "compute",
       "description": "Proxmox VE cluster UI (pve).",

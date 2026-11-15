@@ -1,34 +1,106 @@
 {
-  "welcome": "Find what is available, open it, and see if it is healthy — for family support and operators.",
+  "welcome": "Home and homelab in one place \u2014 find services, check health, and jump in when something needs help.",
   "paths": [
     {
       "id": "browse",
       "title": "Find a service",
-      "body": "Search or browse below, then open the card.",
-      "target": "#local-services"
+      "body": "Search home, shares, games, or lab tools below.",
+      "target": "#home-services"
     },
     {
       "id": "broken",
       "title": "Something look broken?",
-      "body": "Check Infrastructure health, then open that admin page.",
+      "body": "Check Health for internet, power, and lab surfaces.",
       "target": "#infra-health"
     },
     {
       "id": "help",
       "title": "Learn how to help",
-      "body": "The Guide explains what each surface is for.",
+      "body": "The Guide covers home and homelab surfaces.",
       "target": "#guide"
     }
   ],
   "sections": [
     {
-      "id": "local",
-      "title": "Local services",
-      "subtitle": "On the home and lab network.",
+      "id": "home",
+      "title": "Home",
+      "subtitle": "Everyday house services \u2014 internet, power, pool, media, print.",
       "items": [
         {
+          "name": "Internet (ISP)",
+          "blurb": "Fidium fiber (AS14051) \u2014 outbound path health from the lab.",
+          "help": "WAN egress ~156.47.77.110 via Fidium. Typical latency ~8ms to 1.1.1.1; TCP check is Cloudflare :443. Sample CF download ~650 Mbps from this host.",
+          "url": "#infra-health",
+          "linkLabel": "See health",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/internet-favicon.png",
+          "vendor": "assets/icons/internet-vendor.svg",
+          "statusName": "Internet (ISP)"
+        },
+        {
+          "name": "Tesla Energy",
+          "blurb": "Tesla Powerwall local gateway \u2014 battery / home energy on the house network.",
+          "help": "Local UI at tesla.dataknife.net. Meter APIs need login/token; HA core Tesla integration was removed \u2014 use Tesla app or Fleet API for live SoC.",
+          "url": "https://tesla.dataknife.net/",
+          "linkLabel": "Open Powerwall",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/tesla-favicon.png",
+          "vendor": "assets/icons/tesla-vendor.svg",
+          "statusName": "Tesla Energy"
+        },
+        {
+          "name": "Enphase Envoy",
+          "blurb": "Solar production gateway on the house network (envoy.local).",
+          "help": "Official Home Assistant integration: enphase_envoy. Local /info answers without login; live production needs Enphase token or installer password.",
+          "url": "https://envoy.local/",
+          "linkLabel": "Open Envoy",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/enphase-favicon.png",
+          "vendor": "assets/icons/enphase-vendor.svg",
+          "statusName": "Enphase Envoy"
+        },
+        {
+          "name": "Pool \u00b7 WaterGuru / Hayward",
+          "blurb": "Pool chemistry (WaterGuru cloud) and equipment (Hayward OmniLogic on omnilogic.local).",
+          "help": "WaterGuru: HACS cloud integrations (prefer igorek24/waterguru-home-assistant; older dwradcliffe needs pycognito fix). Hayward: official HA omnilogic (cloud) or cryptk/haomnilogic-local (UDP 10444 on LAN).",
+          "url": "https://github.com/cryptk/haomnilogic-local",
+          "linkLabel": "OmniLogic local HA",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/pool-favicon.png",
+          "vendor": "assets/icons/pool-vendor.svg",
+          "statusName": "OmniLogic"
+        },
+        {
+          "name": "Lutron",
+          "blurb": "Lutron Smart Bridge \u2014 lights and scenes on the house network.",
+          "help": "LEAP on Lutron-01f3741d.local:8081. Pair via Lutron app or Home Assistant Lutron Caseta.",
+          "url": "https://Lutron-01f3741d.local/",
+          "linkLabel": "Open bridge",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/lutron-favicon.png",
+          "vendor": "assets/icons/lutron-vendor.svg",
+          "statusName": "Lutron"
+        },
+        {
+          "name": "SmartThings",
+          "blurb": "Samsung SmartThings hub \u2014 house automations and sensors.",
+          "help": "Hub answers on hubv3-03011283166.local. Use the SmartThings app for routines.",
+          "url": "https://hubv3-03011283166.local/",
+          "linkLabel": "Hub",
+          "audience": "everyone",
+          "category": "Home",
+          "favicon": "assets/icons/smartthings-favicon.png",
+          "vendor": "assets/icons/smartthings-vendor.svg",
+          "statusName": "SmartThings Hub"
+        },
+        {
           "name": "Sign in",
-          "blurb": "One login for most lab websites.",
+          "blurb": "One login for most home and lab websites.",
           "help": "If login fails, note the error and ask whoever runs Authentik.",
           "url": "https://auth.dataknife.net/",
           "audience": "everyone",
@@ -39,7 +111,7 @@
         },
         {
           "name": "Plex (lab)",
-          "blurb": "Media on the home network — movies, shows, and more.",
+          "blurb": "Media on the home network \u2014 movies, shows, and more.",
           "help": "Use this when you are on the lab network. Prefer Plex (app) when away.",
           "url": "https://tn.dataknife.net:32400/web/",
           "audience": "everyone",
@@ -50,8 +122,8 @@
         },
         {
           "name": "Brother printer",
-          "blurb": "Brother HL-L2460DW — lab network printer (AirPrint / IPP).",
-          "help": "Host: BRW502E6685EFE7.local · IPP: ipp://BRW502E6685EFE7.local/ipp/print",
+          "blurb": "Brother HL-L2460DW \u2014 lab network printer (AirPrint / IPP).",
+          "help": "Host: BRW502E6685EFE7.local \u00b7 IPP: ipp://BRW502E6685EFE7.local/ipp/print",
           "url": "http://BRW502E6685EFE7.local/",
           "linkLabel": "Open printer",
           "audience": "everyone",
@@ -60,9 +132,16 @@
           "vendor": "assets/icons/brother-vendor.svg",
           "connect": {
             "linux": "lpadmin -p Brother-HL-L2460DW -E -v ipp://BRW502E6685EFE7.local/ipp/print -m everywhere",
-            "windows": "Settings → Printers & scanners → Add device (or Add manually → IPP URL http://BRW502E6685EFE7.local:631/ipp/print)"
+            "windows": "Settings \u2192 Printers & scanners \u2192 Add device (or Add manually \u2192 IPP URL http://BRW502E6685EFE7.local:631/ipp/print)"
           }
-        },
+        }
+      ]
+    },
+    {
+      "id": "local",
+      "title": "Homelab",
+      "subtitle": "Cluster, storage, and operator tools.",
+      "items": [
         {
           "name": "TrueNAS",
           "blurb": "Storage admin for pools, datasets, and apps on the NAS.",
@@ -76,7 +155,7 @@
         },
         {
           "name": "Object storage",
-          "blurb": "NAS / RustFS — S3-style buckets for apps and backups.",
+          "blurb": "NAS / RustFS \u2014 S3-style buckets for apps and backups.",
           "help": "If an app cannot write objects, confirm this endpoint first.",
           "url": "https://nas.dataknife.net/",
           "audience": "support",
@@ -87,7 +166,7 @@
         },
         {
           "name": "Workspaces",
-          "blurb": "Coder — browser IDEs and agent berths.",
+          "blurb": "Coder \u2014 browser IDEs and agent berths.",
           "help": "If a workspace will not start, check Coder then the cluster.",
           "url": "https://coder.dataknife.net/",
           "audience": "support",
@@ -109,7 +188,7 @@
         },
         {
           "name": "Container registry",
-          "blurb": "Harbor — private images the clusters pull.",
+          "blurb": "Harbor \u2014 private images the clusters pull.",
           "help": "Deploy failures that say image pull often start here.",
           "url": "https://harbor.dataknife.net/",
           "audience": "admin",
@@ -120,7 +199,7 @@
         },
         {
           "name": "Kubernetes manager",
-          "blurb": "Rancher — clusters, nodes, and GitOps targets.",
+          "blurb": "Rancher \u2014 clusters, nodes, and GitOps targets.",
           "help": "Use when a whole cluster looks unhealthy.",
           "url": "https://rancher.dataknife.net/",
           "audience": "admin",
@@ -160,7 +239,7 @@
           "statusName": "TrueNAS",
           "connect": {
             "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Movies /mnt/movies",
-            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Movies Z:"
+            "windows": "Turn on \u201cServices for NFS\u201d, then: mount tn.dataknife.net:/mnt/SAS/Movies Z:"
           }
         },
         {
@@ -176,7 +255,7 @@
           "statusName": "TrueNAS",
           "connect": {
             "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Anime /mnt/anime",
-            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Anime Z:"
+            "windows": "Turn on \u201cServices for NFS\u201d, then: mount tn.dataknife.net:/mnt/SAS/Anime Z:"
           }
         },
         {
@@ -192,7 +271,7 @@
           "statusName": "TrueNAS",
           "connect": {
             "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Shows /mnt/shows",
-            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Shows Z:"
+            "windows": "Turn on \u201cServices for NFS\u201d, then: mount tn.dataknife.net:/mnt/SAS/Shows Z:"
           }
         },
         {
@@ -208,7 +287,7 @@
           "statusName": "TrueNAS",
           "connect": {
             "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Photos /mnt/photos",
-            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Photos Z:"
+            "windows": "Turn on \u201cServices for NFS\u201d, then: mount tn.dataknife.net:/mnt/SAS/Photos Z:"
           }
         },
         {
@@ -224,7 +303,7 @@
           "statusName": "TrueNAS",
           "connect": {
             "linux": "sudo mount -t nfs tn.dataknife.net:/mnt/SAS/Timelapse /mnt/timelapse",
-            "windows": "Turn on “Services for NFS”, then: mount tn.dataknife.net:/mnt/SAS/Timelapse Z:"
+            "windows": "Turn on \u201cServices for NFS\u201d, then: mount tn.dataknife.net:/mnt/SAS/Timelapse Z:"
           }
         }
       ]
@@ -232,14 +311,14 @@
     {
       "id": "games",
       "title": "Game servers",
-      "subtitle": "Dedicated servers on the lab. Ask an admin for join passwords — never share admin credentials.",
+      "subtitle": "Dedicated servers on the lab. Ask an admin for join passwords \u2014 never share admin credentials.",
       "items": [
         {
           "name": "Palworld",
           "blurb": "Dedicated Palworld world (Kubernetes operator).",
-          "help": "In-game: Join Multiplayer Game → direct connect. Use the join password (server-password), not admin-password.",
+          "help": "In-game: Join Multiplayer Game \u2192 direct connect. Use the join password (server-password), not admin-password.",
           "join": "palworld.dataknife.net:8211 (UDP)",
-          "adminDetail": "https://palworld.dataknife.net/ — basic auth user admin (operators only)",
+          "adminDetail": "https://palworld.dataknife.net/ \u2014 basic auth user admin (operators only)",
           "url": "https://palworld.dataknife.net/",
           "linkLabel": "Open admin",
           "audience": "everyone",
@@ -251,7 +330,7 @@
         {
           "name": "Windrose",
           "blurb": "Windrose dedicated server.",
-          "help": "In-game: Play → Connect to Server. Direct connect uses host:port; invite-code mode is operator-configured.",
+          "help": "In-game: Play \u2192 Connect to Server. Direct connect uses host:port; invite-code mode is operator-configured.",
           "join": "windrose.dataknife.net:7777 (TCP + UDP)",
           "adminDetail": "Operator docs: github.com/DataKnifeAI/windrose-server-k8s (invite code / direct-connect settings)",
           "url": "https://github.com/DataKnifeAI/windrose-server-k8s",
@@ -265,7 +344,7 @@
         {
           "name": "Satisfactory",
           "blurb": "Satisfactory dedicated server.",
-          "help": "In-game: Server Manager → Add Server → enter host and port 7777.",
+          "help": "In-game: Server Manager \u2192 Add Server \u2192 enter host and port 7777.",
           "join": "satisfactory.dataknife.net:7777 (TCP + UDP)",
           "adminDetail": "Operator docs: github.com/DataKnifeAI/satisfactory-server-k8s",
           "url": "https://github.com/DataKnifeAI/satisfactory-server-k8s",
@@ -280,12 +359,12 @@
     },
     {
       "id": "external",
-      "title": "External · apps",
+      "title": "External \u00b7 apps",
       "subtitle": "Browser games, tools, and DataKnifeAI org homes.",
       "items": [
         {
           "name": "Plex (app)",
-          "blurb": "Official Plex app — use when you are away from the lab network.",
+          "blurb": "Official Plex app \u2014 use when you are away from the lab network.",
           "help": "Signs into the same Plex account that serves the lab libraries.",
           "url": "https://app.plex.tv/",
           "audience": "everyone",
@@ -295,7 +374,7 @@
         },
         {
           "name": "D.O.N.T. Ship",
-          "blurb": "Browser game from DataKnifeAI — Definitely Not On Time.",
+          "blurb": "Browser game from DataKnifeAI \u2014 Definitely Not On Time.",
           "help": "Play at ds.dataknife.ai.",
           "url": "https://ds.dataknife.ai",
           "audience": "everyone",
@@ -355,7 +434,7 @@
         },
         {
           "name": "DockFire on GitHub",
-          "blurb": "This site’s public repository.",
+          "blurb": "This site\u2019s public repository.",
           "help": "Open an issue if a link is wrong or a share should be listed.",
           "url": "https://github.com/DataKnifeAI/dockfire",
           "audience": "support",
@@ -365,7 +444,7 @@
         },
         {
           "name": "DockFire on GitLab",
-          "blurb": "Internal mirror for the lab’s GitOps path.",
+          "blurb": "Internal mirror for the lab\u2019s GitOps path.",
           "help": "Prefer GitHub for public discussion.",
           "url": "https://gitlab.com/dk-raas/dkai/dockfire",
           "audience": "admin",

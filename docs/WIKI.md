@@ -1,6 +1,6 @@
 # DockFire wiki
 
-**DockFire** is the homelab central for local and external services — find what is available, check coarse health, and jump into the right admin UI. Aimed at family support as much as operators.
+**DockFire** covers home and homelab services and health — find what is available, check coarse reachability, and jump into the right admin UI. Aimed at family support as much as operators.
 
 Rendered live in the site **Guide** section (same content as `site/wiki.json`).
 
