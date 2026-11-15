@@ -3,6 +3,8 @@ const summary = document.getElementById("summary");
 const refreshBtn = document.getElementById("refresh");
 const template = document.getElementById("tile-template");
 const kindFilters = document.getElementById("kind-filters");
+const viewHealth = document.getElementById("view-health");
+const viewWiki = document.getElementById("view-wiki");
 
 const els = {
   online: document.getElementById("stat-online"),
@@ -15,9 +17,27 @@ const els = {
 let activeKind = "all";
 let lastPayload = null;
 
+document.querySelectorAll(".tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const view = tab.dataset.view;
+    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === tab));
+    viewHealth.hidden = view !== "health";
+    viewWiki.hidden = view !== "wiki";
+    refreshBtn.hidden = view !== "health";
+    if (view === "wiki") summary.textContent = "wiki";
+    else if (lastPayload) summary.textContent = summarize(lastPayload.counts);
+  });
+});
+
 async function fetchStatus() {
   const res = await fetch(`/api/status?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`/api/status ${res.status}`);
+  return res.json();
+}
+
+async function fetchWiki() {
+  const res = await fetch(`/wiki.json?t=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`/wiki.json ${res.status}`);
   return res.json();
 }
 
@@ -67,8 +87,6 @@ function renderStats(data) {
 
 function renderTile(service) {
   const node = template.content.firstElementChild.cloneNode(true);
-  node.dataset.kind = service.kind || "";
-  node.dataset.status = service.status || "unknown";
   const dot = node.querySelector("[data-status]");
   dot.dataset.status = service.status || "unknown";
   node.querySelector(".tile-name").textContent = service.name;
@@ -95,6 +113,45 @@ function renderGrid(data) {
   }
 }
 
+function renderWiki(wiki) {
+  document.getElementById("wiki-title").textContent = wiki.title || "Wiki";
+  document.getElementById("wiki-intro").textContent = wiki.intro || "";
+  const body = document.getElementById("wiki-body");
+  body.replaceChildren();
+  for (const section of wiki.sections || []) {
+    const block = document.createElement("article");
+    block.className = "wiki-section";
+    const h = document.createElement("h2");
+    h.textContent = section.title;
+    block.appendChild(h);
+    for (const entry of section.entries || []) {
+      const item = document.createElement("div");
+      item.className = "wiki-entry";
+      const name = document.createElement("h3");
+      name.textContent = entry.name;
+      const summary = document.createElement("p");
+      summary.className = "wiki-summary";
+      summary.textContent = entry.summary || "";
+      const list = document.createElement("ul");
+      for (const bullet of entry.used_for || []) {
+        const li = document.createElement("li");
+        li.textContent = bullet;
+        list.appendChild(li);
+      }
+      item.append(name, summary, list);
+      block.appendChild(item);
+    }
+    body.appendChild(block);
+  }
+  const notes = document.getElementById("wiki-notes");
+  notes.replaceChildren();
+  for (const note of wiki.notes || []) {
+    const li = document.createElement("li");
+    li.textContent = note;
+    notes.appendChild(li);
+  }
+}
+
 function summarize(counts = {}) {
   const parts = [];
   if (counts.bad) parts.push(`${counts.bad} bad`);
@@ -112,7 +169,7 @@ async function refresh() {
     lastPayload = data;
     renderStats(data);
     renderGrid(data);
-    summary.textContent = summarize(data.counts);
+    if (!viewHealth.hidden) summary.textContent = summarize(data.counts);
   } catch (err) {
     summary.textContent = `failed: ${err.message}`;
     console.error(err);
@@ -120,6 +177,12 @@ async function refresh() {
     refreshBtn.disabled = false;
   }
 }
+
+fetchWiki()
+  .then(renderWiki)
+  .catch((err) => {
+    document.getElementById("wiki-intro").textContent = `Wiki failed to load: ${err.message}`;
+  });
 
 refreshBtn.addEventListener("click", refresh);
 refresh();

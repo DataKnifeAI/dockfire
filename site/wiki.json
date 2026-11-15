@@ -1,0 +1,172 @@
+{
+  "title": "Homelab wiki",
+  "intro": "What each Dockfire surface is for. Health checks are DNS resolve + TCP from the cluster; admin links open the management UI. No credentials are stored in Dockfire.",
+  "sections": [
+    {
+      "id": "compute",
+      "title": "Compute",
+      "entries": [
+        {
+          "name": "Proxmox",
+          "summary": "Primary hypervisor cluster for VMs and LXCs.",
+          "used_for": [
+            "Run guest VMs and containers that back app workloads",
+            "Snapshots, live migration, and node maintenance",
+            "Storage attachment for guests (local / shared)"
+          ]
+        },
+        {
+          "name": "PegaProx",
+          "summary": "Helper UI around the Proxmox cluster.",
+          "used_for": [
+            "Faster cluster-oriented views than the stock PVE UI",
+            "Day-2 operations convenience for Proxmox hosts"
+          ]
+        },
+        {
+          "name": "Proxmox Datacenter Manager",
+          "summary": "Upstream PDM control plane for multi-node Proxmox.",
+          "used_for": [
+            "Central management across Proxmox nodes",
+            "Fleet-style visibility for the compute layer"
+          ]
+        },
+        {
+          "name": "iDRAC",
+          "summary": "Dell out-of-band management processors on bare-metal hosts.",
+          "used_for": [
+            "Power control, console, and hardware health when the OS is down",
+            "Firmware and hardware alerting independent of the hypervisor"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storage-backup",
+      "title": "Storage & backup",
+      "entries": [
+        {
+          "name": "TrueNAS",
+          "summary": "Primary NAS for datasets, shares, and block storage.",
+          "used_for": [
+            "NFS/iSCSI/SMB for clusters and workstations",
+            "Dataset snapshots and replication jobs",
+            "Backing volumes used by Kubernetes CSI where applicable"
+          ]
+        },
+        {
+          "name": "NAS / RustFS",
+          "summary": "S3-compatible object storage endpoint.",
+          "used_for": [
+            "App and backup object buckets",
+            "GitOps / CNPG style object destinations when configured"
+          ]
+        },
+        {
+          "name": "Proxmox Backup",
+          "summary": "PBS appliance for guest and host backups.",
+          "used_for": [
+            "Proxmox guest backup jobs",
+            "Retention and restore of VM/LXC images"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "title": "Kubernetes & platforms",
+      "entries": [
+        {
+          "name": "Rancher",
+          "summary": "Cluster manager for RKE2 / downstream clusters.",
+          "used_for": [
+            "Create and manage Kubernetes clusters",
+            "Fleet GitOps targeting (prd-apps and friends)",
+            "Access control and cluster inventory"
+          ]
+        },
+        {
+          "name": "Harbor",
+          "summary": "Private container registry.",
+          "used_for": [
+            "Store cluster images (library/* and mirrors)",
+            "Scan and replicate images used by GitOps deploys"
+          ]
+        },
+        {
+          "name": "Coder",
+          "summary": "Workspace control plane for humans and coding agents.",
+          "used_for": [
+            "Ephemeral or persistent IDE workspaces",
+            "Agent berths used by slashbay-style dispatch"
+          ]
+        },
+        {
+          "name": "Authentik",
+          "summary": "SSO identity provider for lab apps.",
+          "used_for": [
+            "Single sign-on into internal UIs",
+            "OIDC/SAML for apps that support it"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "observe",
+      "title": "Observe & respond",
+      "entries": [
+        {
+          "name": "Pulseblade",
+          "summary": "Agent-first infrastructure monitor with gated remediation.",
+          "used_for": [
+            "Fleet health, findings, and change journals",
+            "MCP surface for agents; human dashboard for triage"
+          ]
+        },
+        {
+          "name": "Grafana",
+          "summary": "Metrics and dashboard UI.",
+          "used_for": [
+            "Time-series views across hosts and clusters",
+            "Showpiece graphs for capacity and saturation"
+          ]
+        },
+        {
+          "name": "Dockfire",
+          "summary": "This page: coarse health plus deep links.",
+          "used_for": [
+            "One glance at whether admin surfaces answer TCP",
+            "Jump straight into the right UI when something is red"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "network-power",
+      "title": "Network & power",
+      "entries": [
+        {
+          "name": "UniFi",
+          "summary": "LAN / WLAN controller (gateway or UniFi OS).",
+          "used_for": [
+            "Wi-Fi, switching, and LAN firewall policy",
+            "Client and uplink visibility for the home/lab network"
+          ]
+        },
+        {
+          "name": "PDU",
+          "summary": "Rack power distribution with a network management card.",
+          "used_for": [
+            "Outlet power state and load",
+            "Remote power cycle for stubborn hardware (carefully)"
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Dockfire never stores passwords, tokens, or API keys.",
+    "Reachability is resolve+TCP from the cluster path — not a full app login test.",
+    "LAN-only endpoints (raw RFC1918 admin URLs) stay out of the public git tree and are mounted at deploy time when needed."
+  ]
+}

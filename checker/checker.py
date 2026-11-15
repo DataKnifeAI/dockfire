@@ -12,15 +12,45 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-SERVICES_PATH = Path(os.environ.get("DOCKFIRE_SERVICES", "/data/services.json"))
+SERVICES_PATH = Path(os.environ.get("DOCKFIRE_SERVICES", "/usr/share/nginx/html/services.json"))
+SERVICES_LOCAL_PATH = Path(
+    os.environ.get("DOCKFIRE_SERVICES_LOCAL", "/usr/share/nginx/html/services.local.json")
+)
 LISTEN = ("0.0.0.0", int(os.environ.get("DOCKFIRE_CHECK_PORT", "8081")))
 TIMEOUT = float(os.environ.get("DOCKFIRE_CHECK_TIMEOUT", "2.0"))
 
 
-def load_services() -> list[dict]:
-    data = json.loads(SERVICES_PATH.read_text())
+def _read_services(path: Path) -> list[dict]:
+    if not path.is_file():
+        return []
+    data = json.loads(path.read_text())
     return data.get("services", [])
 
+
+def load_services() -> list[dict]:
+    """Public catalog plus optional LAN-only overlay (not in git)."""
+    base = _read_services(SERVICES_PATH)
+    local = _read_services(SERVICES_LOCAL_PATH)
+    by_name = {s.get("name"): s for s in base if s.get("name")}
+    for svc in local:
+        name = svc.get("name")
+        if not name:
+            continue
+        by_name[name] = svc
+    # preserve public order, then append new local-only names
+    ordered = []
+    seen = set()
+    for svc in base:
+        name = svc.get("name")
+        if name in by_name:
+            ordered.append(by_name[name])
+            seen.add(name)
+    for svc in local:
+        name = svc.get("name")
+        if name and name not in seen:
+            ordered.append(svc)
+            seen.add(name)
+    return ordered
 
 def resolve_host(host: str) -> tuple[list[str], str | None]:
     try:

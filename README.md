@@ -17,7 +17,10 @@ Sits above deep telemetry ([pulseblade](https://github.com/DataKnifeAI/pulseblad
 Internal site: <https://dockfire.dataknife.net/>  
 GitLab mirror: <https://gitlab.com/dk-raas/dkai/dockfire>
 
-Static overview surface with configurable admin deep links (`site/services.json`).
+Health + wiki UI. Public catalog is hostname-based (`site/services.json`). LAN-only
+RFC1918 admin URLs live in a **gitignored** overlay — see `deploy/private/services.local.example.json`.
+
+Wiki: [docs/WIKI.md](docs/WIKI.md) (also rendered in the site **Wiki** tab).
 
 ## Related
 

@@ -2,4 +2,9 @@
 node_modules/
 dist/
 .env
+.env.*
 *.log
+# LAN-only admin URLs / RFC1918 hosts — never publish
+deploy/private/services.local.json
+deploy/private/*.local.json
+!**/*.example.json

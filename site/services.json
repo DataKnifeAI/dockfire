@@ -5,170 +5,105 @@
       "kind": "compute",
       "description": "Proxmox VE cluster UI (pve).",
       "admin": "https://pve.dataknife.net:8006/",
-      "check": {
-        "host": "pve.dataknife.net",
-        "port": 8006
-      }
+      "check": { "host": "pve.dataknife.net", "port": 8006 }
     },
     {
       "name": "PegaProx",
       "kind": "compute",
       "description": "Proxmox cluster management helper.",
       "admin": "https://pega.dataknife.net/",
-      "check": {
-        "host": "pega.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "pega.dataknife.net", "port": 443 }
     },
     {
       "name": "Proxmox Datacenter Manager",
       "kind": "compute",
       "description": "PDM control plane.",
       "admin": "https://pdm.dataknife.net/",
-      "check": {
-        "host": "pdm.dataknife.net",
-        "port": 8443
-      }
+      "check": { "host": "pdm.dataknife.net", "port": 8443 }
     },
     {
       "name": "Proxmox Backup",
       "kind": "backup",
       "description": "PBS appliance UI.",
       "admin": "https://pbs.dataknife.net:8007/",
-      "check": {
-        "host": "pbs.dataknife.net",
-        "port": 8007
-      }
+      "check": { "host": "pbs.dataknife.net", "port": 8007 }
     },
     {
       "name": "TrueNAS",
       "kind": "storage",
       "description": "Primary NAS / storage admin.",
       "admin": "https://tn.dataknife.net/",
-      "check": {
-        "host": "tn.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "tn.dataknife.net", "port": 443 }
     },
     {
       "name": "NAS / RustFS",
       "kind": "storage",
       "description": "Object storage endpoint.",
       "admin": "https://nas.dataknife.net/",
-      "check": {
-        "host": "nas.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "nas.dataknife.net", "port": 443 }
     },
     {
       "name": "Rancher",
       "kind": "kubernetes",
       "description": "Rancher manager for clusters.",
       "admin": "https://rancher.dataknife.net/",
-      "check": {
-        "host": "rancher.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "rancher.dataknife.net", "port": 443 }
     },
     {
       "name": "Harbor",
       "kind": "registry",
       "description": "Container registry.",
       "admin": "https://harbor.dataknife.net/",
-      "check": {
-        "host": "harbor.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "harbor.dataknife.net", "port": 443 }
     },
     {
       "name": "Authentik",
       "kind": "sso",
       "description": "SSO / identity provider.",
       "admin": "https://auth.dataknife.net/",
-      "check": {
-        "host": "auth.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "auth.dataknife.net", "port": 443 }
     },
     {
       "name": "Coder",
       "kind": "workspaces",
       "description": "Dev and agent workspaces.",
       "admin": "https://coder.dataknife.net/",
-      "check": {
-        "host": "coder.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "coder.dataknife.net", "port": 443 }
     },
     {
       "name": "Pulseblade",
       "kind": "monitor",
       "description": "Infra monitor and remediation hub.",
       "admin": "https://pulseblade.dataknife.net/",
-      "check": {
-        "host": "pulseblade.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "pulseblade.dataknife.net", "port": 443 }
     },
     {
       "name": "Grafana",
       "kind": "monitor",
       "description": "Metrics dashboards.",
       "admin": "https://grafana.dataknife.net/",
-      "check": {
-        "host": "grafana.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "grafana.dataknife.net", "port": 443 }
     },
     {
       "name": "iDRAC 01",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",
       "admin": "https://idrac01.dataknife.net/",
-      "check": {
-        "host": "idrac01.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "idrac01.dataknife.net", "port": 443 }
     },
     {
       "name": "iDRAC 02",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",
       "admin": "https://idrac02.dataknife.net/",
-      "check": {
-        "host": "idrac02.dataknife.net",
-        "port": 443
-      }
+      "check": { "host": "idrac02.dataknife.net", "port": 443 }
     },
     {
       "name": "iDRAC 05",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",
       "admin": "https://idrac05.dataknife.net/",
-      "check": {
-        "host": "idrac05.dataknife.net",
-        "port": 443
-      }
-    },
-    {
-      "name": "PDU",
-      "kind": "power",
-      "description": "APC Network Management Card.",
-      "admin": "https://[redacted-lan]/",
-      "check": {
-        "host": "[redacted-lan]",
-        "port": 443
-      }
-    },
-    {
-      "name": "UniFi (LAN)",
-      "kind": "network",
-      "description": "Local UniFi OS gateway.",
-      "admin": "https://[redacted-lan]/",
-      "check": {
-        "host": "[redacted-lan]",
-        "port": 443
-      }
+      "check": { "host": "idrac05.dataknife.net", "port": 443 }
     }
   ]
 }

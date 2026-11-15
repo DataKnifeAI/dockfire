@@ -1,0 +1,18 @@
+{
+  "services": [
+    {
+      "name": "PDU",
+      "kind": "power",
+      "description": "Rack PDU network management card (LAN-only).",
+      "admin": "https://REPLACE_PDU_HOST/",
+      "check": { "host": "REPLACE_PDU_HOST", "port": 443 }
+    },
+    {
+      "name": "UniFi (LAN)",
+      "kind": "network",
+      "description": "Local UniFi OS gateway (LAN-only).",
+      "admin": "https://REPLACE_UNIFI_HOST/",
+      "check": { "host": "REPLACE_UNIFI_HOST", "port": 443 }
+    }
+  ]
+}
