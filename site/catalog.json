@@ -52,9 +52,9 @@
         },
         {
           "name": "Enphase Envoy",
-          "blurb": "Solar production gateway on the house network (envoy.local).",
+          "blurb": "Solar production gateway on the house network (envoy.dataknife.net).",
           "help": "Official Home Assistant integration: enphase_envoy. Local /info answers without login; live production needs Enphase token or installer password.",
-          "url": "https://envoy.local/",
+          "url": "https://envoy.dataknife.net/",
           "linkLabel": "Open Envoy",
           "audience": "everyone",
           "category": "Home",
@@ -64,7 +64,7 @@
         },
         {
           "name": "Pool \u00b7 WaterGuru / Hayward",
-          "blurb": "Pool chemistry (WaterGuru cloud) and equipment (Hayward OmniLogic on omnilogic.local).",
+          "blurb": "Pool chemistry (WaterGuru cloud) and equipment (Hayward OmniLogic on omnilogic.dataknife.net).",
           "help": "WaterGuru: HACS cloud integrations (prefer igorek24/waterguru-home-assistant; older dwradcliffe needs pycognito fix). Hayward: official HA omnilogic (cloud) or cryptk/haomnilogic-local (UDP 10444 on LAN).",
           "url": "https://github.com/cryptk/haomnilogic-local",
           "linkLabel": "OmniLogic local HA",
@@ -77,8 +77,8 @@
         {
           "name": "Lutron",
           "blurb": "Lutron Smart Bridge \u2014 lights and scenes on the house network.",
-          "help": "LEAP on Lutron-01f3741d.local:8081. Pair via Lutron app or Home Assistant Lutron Caseta.",
-          "url": "https://Lutron-01f3741d.local/",
+          "help": "LEAP on lutron.dataknife.net:8081. Pair via Lutron app or Home Assistant Lutron Caseta.",
+          "url": "https://lutron.dataknife.net/",
           "linkLabel": "Open bridge",
           "audience": "everyone",
           "category": "Home",
@@ -89,8 +89,8 @@
         {
           "name": "SmartThings",
           "blurb": "Samsung SmartThings hub \u2014 house automations and sensors.",
-          "help": "Hub answers on hubv3-03011283166.local. Use the SmartThings app for routines.",
-          "url": "https://hubv3-03011283166.local/",
+          "help": "Hub at smartthings.dataknife.net. Use the SmartThings app for routines.",
+          "url": "https://smartthings.dataknife.net/",
           "linkLabel": "Hub",
           "audience": "everyone",
           "category": "Home",

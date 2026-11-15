@@ -24,7 +24,7 @@
         },
         {
           "name": "Enphase Envoy",
-          "summary": "Solar gateway at envoy.local — official HA enphase_envoy integration.",
+          "summary": "Solar gateway at envoy.dataknife.net — official HA enphase_envoy integration.",
           "used_for": [
             "Confirm Envoy is up (HTTPS answers)",
             "Production stats via HA or Envoy token"
@@ -32,7 +32,7 @@
         },
         {
           "name": "Pool · WaterGuru / Hayward",
-          "summary": "WaterGuru is cloud-only; OmniLogic is on omnilogic.local (UDP 10444 local API).",
+          "summary": "WaterGuru is cloud-only; OmniLogic is on omnilogic.dataknife.net (UDP 10444 local API).",
           "used_for": [
             "WaterGuru HA: igorek24/waterguru-home-assistant (cloud account)",
             "Hayward HA cloud: built-in omnilogic; local: cryptk/haomnilogic-local",

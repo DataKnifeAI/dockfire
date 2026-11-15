@@ -207,7 +207,7 @@ def _worst(statuses: list[str]) -> str:
 
 
 def enrich_envoy() -> dict:
-    code, body, ms = http_get("https://envoy.local/info")
+    code, body, ms = http_get("https://envoy.dataknife.net/info")
     if code != 200 or not body:
         return {"stats": [], "note": "Envoy /info unavailable", "latency_ms": round(ms, 1)}
     stats = []

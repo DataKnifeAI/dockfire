@@ -22,10 +22,10 @@
       "name": "Enphase Envoy",
       "kind": "home",
       "description": "Enphase solar Envoy local gateway.",
-      "admin": "https://envoy.local/",
+      "admin": "https://envoy.dataknife.net/",
       "favicon": "assets/icons/enphase-favicon.png",
       "vendor": "assets/icons/enphase-vendor.svg",
-      "check": { "host": "envoy.local", "port": 443 }
+      "check": { "host": "envoy.dataknife.net", "port": 443 }
     },
     {
       "name": "OmniLogic",
@@ -34,25 +34,25 @@
       "admin": "https://github.com/cryptk/haomnilogic-local",
       "favicon": "assets/icons/pool-favicon.png",
       "vendor": "assets/icons/pool-vendor.svg",
-      "check": { "host": "omnilogic.local", "port": 10444, "mode": "dns" }
+      "check": { "host": "omnilogic.dataknife.net", "port": 10444, "mode": "dns" }
     },
     {
       "name": "Lutron",
       "kind": "home",
       "description": "Lutron Smart Bridge (LEAP).",
-      "admin": "https://Lutron-01f3741d.local/",
+      "admin": "https://lutron.dataknife.net/",
       "favicon": "assets/icons/lutron-favicon.png",
       "vendor": "assets/icons/lutron-vendor.svg",
-      "check": { "host": "Lutron-01f3741d.local", "port": 8081 }
+      "check": { "host": "lutron.dataknife.net", "port": 8081 }
     },
     {
       "name": "SmartThings Hub",
       "kind": "home",
       "description": "Samsung SmartThings hub v3.",
-      "admin": "https://hubv3-03011283166.local/",
+      "admin": "https://smartthings.dataknife.net/",
       "favicon": "assets/icons/smartthings-favicon.png",
       "vendor": "assets/icons/smartthings-vendor.svg",
-      "check": { "host": "hubv3-03011283166.local", "port": 8081 }
+      "check": { "host": "smartthings.dataknife.net", "port": 8081 }
     },
     {
       "name": "Proxmox",
