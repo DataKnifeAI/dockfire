@@ -382,8 +382,8 @@
         {
           "name": "Dragonwilds",
           "blurb": "RuneScape: Dragonwilds dedicated world (Ashenfall).",
-          "help": "In-game: Direct Connect to host:port. World password may be empty when the server allows it \u2014 ask an admin if join fails.",
-          "join": "dragonwilds.dataknife.net:7777 (UDP)",
+          "help": "In-game: Direct Connect with the VIP IP and port 7777 (not the hostname). World password may be empty when the server allows it \u2014 ask an admin if join fails.",
+          "join": "192.168.14.188:7777 (UDP)",
           "adminDetail": "https://dragonwilds.dataknife.net/ \u2014 basic auth (operators only). Operator: github.com/DataKnifeAI/dragonwilds-operator",
           "url": "https://dragonwilds.dataknife.net/",
           "linkLabel": "Open admin",

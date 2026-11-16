@@ -221,9 +221,9 @@
         },
         {
           "name": "Dragonwilds",
-          "summary": "Join dragonwilds.dataknife.net:7777 (UDP). Admin UI at https://dragonwilds.dataknife.net/.",
+          "summary": "Join 192.168.14.188:7777 (UDP). Admin UI at https://dragonwilds.dataknife.net/.",
           "used_for": [
-            "Players: Direct Connect to host:port (world password if required)",
+            "Players: Direct Connect with VIP IP:port (not the hostname; world password if required)",
             "Operators: Server Manager basic auth + DataKnifeAI/dragonwilds-operator"
           ]
         }
