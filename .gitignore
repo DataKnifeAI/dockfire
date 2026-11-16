@@ -2,9 +2,13 @@
 node_modules/
 dist/
 .env
-.env.*
+.env.local
 *.log
-# LAN-only admin URLs / RFC1918 hosts — never publish
+# LAN-only admin URLs / RFC1918 hosts / energy tokens — never publish
 deploy/private/services.local.json
 deploy/private/*.local.json
+deploy/private/energy.env
+deploy/private/*.env
 !**/*.example.json
+!**/*.env.example
+!.env.example

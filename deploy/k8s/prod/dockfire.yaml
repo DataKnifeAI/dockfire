@@ -40,6 +40,11 @@ spec:
               value: /usr/share/nginx/html/services.local.json
             - name: DOCKFIRE_CHECK_TIMEOUT
               value: "2.0"
+          envFrom:
+            # Optional — create with ./scripts/apply-energy-secret.sh
+            - secretRef:
+                name: dockfire-energy
+                optional: true
           livenessProbe:
             httpGet:
               path: /healthz

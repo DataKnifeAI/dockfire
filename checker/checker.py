@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 SERVICES_PATH = Path(os.environ.get("DOCKFIRE_SERVICES", "/usr/share/nginx/html/services.json"))
 SERVICES_LOCAL_PATH = Path(
@@ -30,6 +30,54 @@ SSL_CTX = ssl._create_unverified_context()  # noqa: S323 — LAN gear uses priva
 
 # In-process ring buffer for family mode timeline (power + ISP).
 _MODE_HISTORY: list[dict] = []
+_TESLA_COOKIE: str | None = None
+_TESLA_COOKIE_AT: float = 0.0
+
+
+def _load_env_file(path: Path) -> None:
+    """Load KEY=VALUE into os.environ if not already set (does not override)."""
+    if not path.is_file():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key = key.strip()
+        val = val.strip().strip("'").strip('"')
+        if key and key not in os.environ:
+            os.environ[key] = val
+
+
+def load_energy_env() -> None:
+    """Pull energy secrets from DOCKFIRE_ENV_FILE, energy.env, or .env."""
+    candidates = []
+    explicit = os.environ.get("DOCKFIRE_ENV_FILE")
+    if explicit:
+        candidates.append(Path(explicit))
+    # Common local / container mounts
+    candidates.extend(
+        [
+            Path("/run/secrets/dockfire-energy.env"),
+            Path("deploy/private/energy.env"),
+            Path("/usr/share/nginx/html/energy.env"),
+            Path(".env"),
+        ]
+    )
+    for path in candidates:
+        try:
+            if path.is_file():
+                _load_env_file(path)
+                break
+        except OSError:
+            continue
+
+
+load_energy_env()
+
+
+def _env(name: str, default: str = "") -> str:
+    return (os.environ.get(name) or default).strip()
 
 
 def _read_json(path: Path) -> dict:
@@ -93,28 +141,42 @@ def tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str | None, f
         return False, str(err.strerror or err), ms
 
 
-def http_get(
+def http_request(
     url: str,
+    *,
+    method: str = "GET",
     timeout: float = HTTP_TIMEOUT,
     headers: dict | None = None,
-) -> tuple[int | None, bytes, float]:
+    data: bytes | None = None,
+) -> tuple[int | None, bytes, float, dict[str, str]]:
     start = time.perf_counter()
     hdrs = {"User-Agent": "dockfire-checker/1"}
     if headers:
         hdrs.update(headers)
-    req = urllib.request.Request(url, headers=hdrs)
+    req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
     try:
         with urllib.request.urlopen(req, context=SSL_CTX, timeout=timeout) as resp:
-            return resp.status, resp.read(65536), (time.perf_counter() - start) * 1000
+            resp_headers = {k.lower(): v for k, v in resp.headers.items()}
+            return resp.status, resp.read(65536), (time.perf_counter() - start) * 1000, resp_headers
     except urllib.error.HTTPError as err:
         body = b""
         try:
             body = err.read(4096)
         except Exception:  # noqa: BLE001
             pass
-        return err.code, body, (time.perf_counter() - start) * 1000
+        resp_headers = {k.lower(): v for k, v in (err.headers.items() if err.headers else [])}
+        return err.code, body, (time.perf_counter() - start) * 1000, resp_headers
     except Exception:  # noqa: BLE001
-        return None, b"", (time.perf_counter() - start) * 1000
+        return None, b"", (time.perf_counter() - start) * 1000, {}
+
+
+def http_get(
+    url: str,
+    timeout: float = HTTP_TIMEOUT,
+    headers: dict | None = None,
+) -> tuple[int | None, bytes, float]:
+    code, body, ms, _ = http_request(url, timeout=timeout, headers=headers)
+    return code, body, ms
 
 
 def check_one(service: dict) -> dict:
@@ -217,29 +279,124 @@ def _worst(statuses: list[str]) -> str:
     return max(statuses, key=_rank)
 
 
+def _fmt_kw(watts: float | int | None) -> str:
+    if watts is None:
+        return "—"
+    return f"{float(watts) / 1000.0:.2f} kW"
+
+
+def fetch_enphase_production() -> dict:
+    host = _env("ENPHASE_HOST", "https://envoy.dataknife.net").rstrip("/")
+    token = _env("ENPHASE_TOKEN")
+    if not token:
+        return {"ok": False, "note": "Set ENPHASE_TOKEN for live Enphase watts"}
+    code, body, ms = http_get(
+        f"{host}/production.json",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+    if code != 200 or not body:
+        return {"ok": False, "note": f"Enphase production HTTP {code}", "latency_ms": round(ms, 1)}
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {"ok": False, "note": "Enphase production unreadable", "latency_ms": round(ms, 1)}
+    # Prefer production array (inverters / site)
+    w_now = None
+    for block in data.get("production") or []:
+        if isinstance(block, dict) and block.get("type") in ("inverters", "eim", None):
+            if "wNow" in block:
+                w_now = block.get("wNow")
+                if block.get("type") == "inverters":
+                    break
+    if w_now is None and isinstance(data.get("wattsNow"), (int, float)):
+        w_now = data["wattsNow"]
+    return {
+        "ok": True,
+        "w_now": w_now,
+        "latency_ms": round(ms, 1),
+        "note": "Enphase live",
+    }
+
+
+def fetch_solaredge_overview() -> dict:
+    api_key = _env("SOLAREDGE_API_KEY")
+    site_id = _env("SOLAREDGE_SITE_ID")
+    if not api_key or not site_id:
+        return {"ok": False, "note": "Set SOLAREDGE_API_KEY + SOLAREDGE_SITE_ID for SolarEdge watts"}
+    url = (
+        f"https://monitoringapi.solaredge.com/site/{site_id}/overview"
+        f"?api_key={quote(api_key)}"
+    )
+    code, body, ms = http_get(url, headers={"Accept": "application/json"})
+    if code != 200 or not body:
+        return {"ok": False, "note": f"SolarEdge HTTP {code}", "latency_ms": round(ms, 1)}
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {"ok": False, "note": "SolarEdge overview unreadable", "latency_ms": round(ms, 1)}
+    overview = (data.get("overview") or {})
+    current = overview.get("currentPower") or {}
+    power_w = current.get("power")
+    # SolarEdge reports kW in some payloads — normalize
+    if isinstance(power_w, (int, float)) and power_w < 100 and power_w != 0:
+        # likely already kW when small; treat as kW → W
+        power_w = power_w * 1000.0
+    return {
+        "ok": True,
+        "w_now": power_w,
+        "latency_ms": round(ms, 1),
+        "note": "SolarEdge live",
+    }
+
+
 def enrich_solar(svc_map: dict[str, dict]) -> dict:
-    """Two arrays: Enphase (LAN) + SolarEdge (not currently seen on LAN)."""
+    """Enphase (LAN + token) and SolarEdge (cloud API key)."""
     envoy = svc_map.get("Enphase Envoy") or {}
-    se = svc_map.get("SolarEdge") or {}
-    code, _body, ms = http_get("https://envoy.dataknife.net/info")
-    # production.json needs token — do not pretend we have watts.
-    stats = []
-    if code == 200 or envoy.get("status") == "ok":
+    host = _env("ENPHASE_HOST", "https://envoy.dataknife.net").rstrip("/")
+    code, _body, ms = http_get(f"{host}/info")
+    stats: list[dict] = []
+    notes: list[str] = []
+    total_w = 0.0
+    have_watts = False
+
+    enphase = fetch_enphase_production()
+    if enphase.get("ok") and enphase.get("w_now") is not None:
+        stats.append({"label": "Enphase", "value": _fmt_kw(enphase["w_now"])})
+        total_w += float(enphase["w_now"] or 0)
+        have_watts = True
+    elif code == 200 or envoy.get("status") == "ok":
         stats.append({"label": "Enphase", "value": "online"})
-    elif envoy.get("status") == "bad" or (code and code >= 400):
+        if enphase.get("note"):
+            notes.append(str(enphase["note"]))
+    elif envoy.get("status") == "bad":
         stats.append({"label": "Enphase", "value": "down"})
     else:
         stats.append({"label": "Enphase", "value": "—"})
 
-    if se.get("status") == "ok":
-        stats.append({"label": "SolarEdge", "value": "online"})
-    elif se.get("status") == "bad":
-        stats.append({"label": "SolarEdge", "value": "down"})
+    se = fetch_solaredge_overview()
+    if se.get("ok") and se.get("w_now") is not None:
+        stats.append({"label": "SolarEdge", "value": _fmt_kw(se["w_now"])})
+        total_w += float(se["w_now"] or 0)
+        have_watts = True
     else:
-        stats.append({"label": "SolarEdge", "value": "not on LAN"})
+        stats.append({"label": "SolarEdge", "value": "cloud?" if not _env("SOLAREDGE_API_KEY") else "err"})
+        if se.get("note") and _env("SOLAREDGE_API_KEY"):
+            notes.append(str(se["note"]))
+        elif not _env("SOLAREDGE_API_KEY"):
+            notes.append("SolarEdge needs API key + site id")
 
-    note = "Live kW / battery % need Enphase, SolarEdge, and Tesla login"
-    return {"stats": stats, "note": note, "latency_ms": round(ms, 1) if ms else envoy.get("latency_ms")}
+    if have_watts:
+        stats.insert(0, {"label": "Total", "value": _fmt_kw(total_w)})
+        note = "Live production"
+    else:
+        note = " · ".join(notes) if notes else "Live kW need ENPHASE_TOKEN / SolarEdge API key"
+
+    return {
+        "stats": stats,
+        "note": note,
+        "latency_ms": round(ms, 1) if ms else envoy.get("latency_ms"),
+        "w_now": total_w if have_watts else None,
+    }
 
 
 def fetch_weather_bundle() -> dict:
@@ -318,8 +475,64 @@ def fetch_weather_bundle() -> dict:
     return out
 
 
+def _tesla_base() -> str:
+    return _env("TESLA_HOST", "https://tesla.dataknife.net").rstrip("/")
+
+
+def _parse_auth_cookie(set_cookie: str) -> str | None:
+    # AuthCookie=...; Path=/; ...
+    for part in set_cookie.split(";"):
+        part = part.strip()
+        if part.lower().startswith("authcookie="):
+            return part.split("=", 1)[1]
+    return None
+
+
+def tesla_auth_cookie() -> str | None:
+    """Return Powerwall AuthCookie from env or BasicLogin (cached ~50m)."""
+    global _TESLA_COOKIE, _TESLA_COOKIE_AT
+    direct = _env("TESLA_AUTH_COOKIE")
+    if direct:
+        return direct
+    if _TESLA_COOKIE and (time.time() - _TESLA_COOKIE_AT) < 3000:
+        return _TESLA_COOKIE
+    email = _env("TESLA_EMAIL")
+    password = _env("TESLA_PASSWORD")
+    if not email or not password:
+        return None
+    payload = json.dumps(
+        {
+            "username": "customer",
+            "email": email,
+            "password": password,
+            "force_sm_off": False,
+        }
+    ).encode()
+    code, body, _ms, headers = http_request(
+        f"{_tesla_base()}/api/login/BasicLogin",
+        method="POST",
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        data=payload,
+    )
+    cookie = None
+    set_cookie = headers.get("set-cookie") or ""
+    if set_cookie:
+        cookie = _parse_auth_cookie(set_cookie)
+    if not cookie and code == 200 and body:
+        try:
+            data = json.loads(body.decode())
+            cookie = data.get("token") or data.get("AuthCookie")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            cookie = None
+    if cookie:
+        _TESLA_COOKIE = cookie
+        _TESLA_COOKIE_AT = time.time()
+    return cookie
+
+
 def enrich_tesla() -> dict:
-    code, body, ms = http_get("https://tesla.dataknife.net/api/status")
+    base = _tesla_base()
+    code, body, ms = http_get(f"{base}/api/status")
     if code != 200 or not body:
         return {"stats": [], "note": "Powerwall not answering", "latency_ms": round(ms, 1)}
     try:
@@ -327,17 +540,47 @@ def enrich_tesla() -> dict:
     except (json.JSONDecodeError, UnicodeDecodeError):
         return {"stats": [], "note": "Powerwall status unreadable", "latency_ms": round(ms, 1)}
     uptime = str(data.get("up_time_seconds") or "")
-    # "420h3m58.682..." → "420h"
     m = re.match(r"(\d+h(?:\d+m)?)", uptime)
     up_short = m.group(1) if m else (uptime.split(".")[0] if uptime else "—")
+    stats = [{"label": "Battery", "value": "online"}, {"label": "Up", "value": up_short}]
+    note = "Set TESLA_EMAIL/PASSWORD (or TESLA_AUTH_COOKIE) for SoC %"
+    soc_pct = None
+    grid_status = None
+
+    cookie = tesla_auth_cookie()
+    if cookie:
+        hdrs = {"Cookie": f"AuthCookie={cookie}", "Accept": "application/json"}
+        scode, sbody, sms = http_get(f"{base}/api/system_status/soe", headers=hdrs)
+        if scode == 200 and sbody:
+            try:
+                soe = json.loads(sbody.decode())
+                # percentage is 0..1 or 0..100 depending on firmware
+                pct = soe.get("percentage")
+                if isinstance(pct, (int, float)):
+                    soc_pct = pct * 100.0 if pct <= 1.5 else float(pct)
+                    stats = [{"label": "Charge", "value": f"{soc_pct:.0f}%"}, {"label": "Up", "value": up_short}]
+                    note = "Powerwall live"
+                    ms = sms
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                note = "SoC response unreadable"
+        else:
+            note = f"SoC HTTP {scode} — check Tesla credentials"
+
+        gcode, gbody, _ = http_get(f"{base}/api/system_status/grid_status", headers=hdrs)
+        if gcode == 200 and gbody:
+            try:
+                grid = json.loads(gbody.decode())
+                grid_status = grid.get("grid_status") or grid.get("grid_state")
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                pass
+
     return {
-        "stats": [
-            {"label": "Battery", "value": "online"},
-            {"label": "Up", "value": up_short},
-        ],
-        "note": "Grid vs battery detail needs Tesla login",
+        "stats": stats,
+        "note": note,
         "latency_ms": round(ms, 1),
         "din": data.get("din"),
+        "soc_pct": soc_pct,
+        "grid_status": grid_status,
     }
 
 
@@ -362,15 +605,39 @@ def derive_modes(svc_map: dict[str, dict]) -> dict:
     """Family-facing power + ISP mode (not full telemetry)."""
     tesla = svc_map.get("Tesla Energy") or {}
     isp = svc_map.get("Internet (ISP)") or {}
+    tesla_live = enrich_tesla() if tesla.get("status") == "ok" else {}
+    soc = tesla_live.get("soc_pct")
+    grid_status = (tesla_live.get("grid_status") or "").lower()
 
-    # Powerwall local API cannot report islanding without login.
-    # Heuristic: fiber up + PW up → grid; fiber down + PW up → battery; else unknown.
-    if tesla.get("status") == "ok" and isp.get("status") == "bad":
+    # Prefer live grid_status when credentials work.
+    if "island" in grid_status or grid_status in {"system_island_active", "islanded"}:
+        power = {
+            "value": "battery",
+            "label": "Battery",
+            "detail": f"On Powerwall{f' · {soc:.0f}%' if isinstance(soc, (int, float)) else ''}",
+            "status": "warn",
+            "soc_pct": soc,
+        }
+    elif grid_status in {"system_grid_connected", "grid_connected", "connected"} or (
+        tesla.get("status") == "ok" and isp.get("status") != "bad"
+    ):
+        detail = "On grid power"
+        if isinstance(soc, (int, float)):
+            detail = f"Grid · battery {soc:.0f}%"
+        power = {
+            "value": "grid",
+            "label": "Grid",
+            "detail": detail,
+            "status": "ok",
+            "soc_pct": soc,
+        }
+    elif tesla.get("status") == "ok" and isp.get("status") == "bad":
         power = {
             "value": "battery",
             "label": "Battery",
             "detail": "Fiber looks down — house may be on Powerwall",
             "status": "warn",
+            "soc_pct": soc,
         }
     elif tesla.get("status") == "ok":
         power = {
@@ -378,6 +645,7 @@ def derive_modes(svc_map: dict[str, dict]) -> dict:
             "label": "Grid",
             "detail": "Powerwall online · likely on grid power",
             "status": "ok",
+            "soc_pct": soc,
         }
     elif tesla.get("status") == "bad":
         power = {
@@ -648,7 +916,10 @@ def build_home(status_payload: dict | None = None) -> dict:
         "weather": weather_bundle.get("weather"),
         "quakes": weather_bundle.get("quakes") or [],
         "weather_note": weather_bundle.get("note") or "",
-        "energy_note": "Battery % and solar kW need Tesla / Enphase / SolarEdge login. SolarEdge is not visible on the home LAN right now.",
+        "energy_note": (
+            "Fill deploy/private/energy.env (TESLA_*, ENPHASE_TOKEN, SOLAREDGE_*) "
+            "then ./scripts/apply-energy-secret.sh for the cluster."
+        ),
     }
 
 

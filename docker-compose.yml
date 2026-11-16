@@ -17,9 +17,14 @@ services:
       DOCKFIRE_SERVICES: /usr/share/nginx/html/services.json
       DOCKFIRE_SERVICES_LOCAL: /usr/share/nginx/html/services.local.json
       DOCKFIRE_HOME: /usr/share/nginx/html/home.json
+      DOCKFIRE_ENV_FILE: /run/secrets/dockfire-energy.env
       DOCKFIRE_CHECK_TIMEOUT: "2.0"
+    env_file:
+      - path: ./deploy/private/energy.env
+        required: false
     volumes:
       - ./deploy/private/services.local.json:/usr/share/nginx/html/services.local.json:ro
+      - ./deploy/private/energy.env:/run/secrets/dockfire-energy.env:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]

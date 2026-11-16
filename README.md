@@ -49,6 +49,26 @@ Or: `docker compose up --build -d`
 - Browser **Install** / Add to Home Screen works (PWA + service worker)
 - When `/api/*` is unreachable, the UI falls back to `site/mock/` and cached data
 
+### Energy secrets (battery % / solar kW)
+
+```bash
+cp deploy/private/energy.env.example deploy/private/energy.env
+# edit: TESLA_EMAIL/PASSWORD (or TESLA_AUTH_COOKIE), ENPHASE_TOKEN,
+#       SOLAREDGE_API_KEY + SOLAREDGE_SITE_ID
+```
+
+Local compose loads `deploy/private/energy.env` automatically.
+
+Push the same values to Kubernetes (never commit the file):
+
+```bash
+./scripts/apply-energy-secret.sh
+kubectl -n dockfire rollout restart deploy/dockfire
+```
+
+Enphase owner token: Enlighten → entrez auth token for your Envoy serial (~1 year).  
+SolarEdge: monitoring portal → Site Access → API Access.
+
 ## Deploy (prd-apps)
 
 ```bash
