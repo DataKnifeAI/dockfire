@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
 import socket
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -15,7 +17,7 @@ import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 SERVICES_PATH = Path(os.environ.get("DOCKFIRE_SERVICES", "/usr/share/nginx/html/services.json"))
 SERVICES_LOCAL_PATH = Path(
@@ -32,6 +34,9 @@ SSL_CTX = ssl._create_unverified_context()  # noqa: S323 — LAN gear uses priva
 _MODE_HISTORY: list[dict] = []
 _TESLA_COOKIE: str | None = None
 _TESLA_COOKIE_AT: float = 0.0
+_ENERGY_ENV_PATH: Path | None = None
+_ENPHASE_CLOUD_LOCK = threading.Lock()
+_ENPHASE_CLOUD_CACHE: dict = {"at": 0.0, "result": None}
 
 
 def _load_env_file(path: Path) -> None:
@@ -45,12 +50,14 @@ def _load_env_file(path: Path) -> None:
         key, _, val = line.partition("=")
         key = key.strip()
         val = val.strip().strip("'").strip('"')
-        if key and key not in os.environ:
+        # Fill missing or blank — do not clobber a non-empty process env.
+        if key and not (os.environ.get(key) or "").strip():
             os.environ[key] = val
 
 
 def load_energy_env() -> None:
     """Pull energy secrets from DOCKFIRE_ENV_FILE, energy.env, or .env."""
+    global _ENERGY_ENV_PATH
     candidates = []
     explicit = os.environ.get("DOCKFIRE_ENV_FILE")
     if explicit:
@@ -68,6 +75,7 @@ def load_energy_env() -> None:
         try:
             if path.is_file():
                 _load_env_file(path)
+                _ENERGY_ENV_PATH = path
                 break
         except OSError:
             continue
@@ -78,6 +86,45 @@ load_energy_env()
 
 def _env(name: str, default: str = "") -> str:
     return (os.environ.get(name) or default).strip()
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = _env(name)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _set_env_persistent(key: str, value: str) -> None:
+    """Update process env and best-effort rewrite local energy.env (not k8s secrets)."""
+    os.environ[key] = value
+    path = _ENERGY_ENV_PATH
+    if not path or not path.is_file():
+        return
+    try:
+        lines = path.read_text().splitlines(True)
+    except OSError:
+        return
+    found = False
+    out: list[str] = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith(f"{key}="):
+            out.append(f"{key}={value}\n")
+            found = True
+        else:
+            out.append(line)
+    if not found:
+        if out and not out[-1].endswith("\n"):
+            out[-1] = out[-1] + "\n"
+        out.append(f"{key}={value}\n")
+    try:
+        path.write_text("".join(out))
+    except OSError:
+        pass
 
 
 def _read_json(path: Path) -> dict:
@@ -285,22 +332,7 @@ def _fmt_kw(watts: float | int | None) -> str:
     return f"{float(watts) / 1000.0:.2f} kW"
 
 
-def fetch_enphase_production() -> dict:
-    host = _env("ENPHASE_HOST", "https://envoy.dataknife.net").rstrip("/")
-    token = _env("ENPHASE_TOKEN")
-    if not token:
-        return {"ok": False, "note": "Set ENPHASE_TOKEN for live Enphase watts"}
-    code, body, ms = http_get(
-        f"{host}/production.json",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-    )
-    if code != 200 or not body:
-        return {"ok": False, "note": f"Enphase production HTTP {code}", "latency_ms": round(ms, 1)}
-    try:
-        data = json.loads(body.decode())
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return {"ok": False, "note": "Enphase production unreadable", "latency_ms": round(ms, 1)}
-    # Prefer production array (inverters / site)
+def _parse_enphase_local_watts(data: dict) -> float | int | None:
     w_now = None
     for block in data.get("production") or []:
         if isinstance(block, dict) and block.get("type") in ("inverters", "eim", None):
@@ -310,12 +342,201 @@ def fetch_enphase_production() -> dict:
                     break
     if w_now is None and isinstance(data.get("wattsNow"), (int, float)):
         w_now = data["wattsNow"]
+    return w_now
+
+
+def fetch_enphase_local() -> dict:
+    """Live watts from LAN Envoy (owner JWT). Preferred path — no cloud quota."""
+    host = _env("ENPHASE_HOST", "https://envoy.dataknife.net").rstrip("/")
+    token = _env("ENPHASE_TOKEN")
+    if not token:
+        return {"ok": False, "note": "No ENPHASE_TOKEN (local Envoy JWT)"}
+    code, body, ms = http_get(
+        f"{host}/production.json",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+    if code != 200 or not body:
+        return {
+            "ok": False,
+            "note": f"Enphase local HTTP {code}",
+            "latency_ms": round(ms, 1),
+            "source": "local",
+        }
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {
+            "ok": False,
+            "note": "Enphase local unreadable",
+            "latency_ms": round(ms, 1),
+            "source": "local",
+        }
+    return {
+        "ok": True,
+        "w_now": _parse_enphase_local_watts(data),
+        "latency_ms": round(ms, 1),
+        "note": "Enphase local",
+        "source": "local",
+    }
+
+
+def _enphase_cloud_configured() -> bool:
+    return bool(
+        _env("ENPHASE_API_KEY")
+        and _env("ENPHASE_SYSTEM_ID")
+        and (_env("ENPHASE_ACCESS_TOKEN") or _env("ENPHASE_REFRESH_TOKEN"))
+        and _env("ENPHASE_CLIENT_ID")
+        and _env("ENPHASE_CLIENT_SECRET")
+    )
+
+
+def _enphase_refresh_access_token() -> tuple[bool, str]:
+    """Rotate OAuth access (+ refresh) tokens. Counts against cloud API quota."""
+    refresh = _env("ENPHASE_REFRESH_TOKEN")
+    cid = _env("ENPHASE_CLIENT_ID")
+    csec = _env("ENPHASE_CLIENT_SECRET")
+    if not refresh or not cid or not csec:
+        return False, "Missing Enphase refresh / client credentials"
+    basic = base64.b64encode(f"{cid}:{csec}".encode()).decode()
+    url = "https://api.enphaseenergy.com/oauth/token?" + urlencode(
+        {"grant_type": "refresh_token", "refresh_token": refresh}
+    )
+    code, body, _ms, _hdrs = http_request(
+        url,
+        method="POST",
+        timeout=max(HTTP_TIMEOUT, 8.0),
+        headers={"Authorization": f"Basic {basic}", "Accept": "application/json"},
+    )
+    if code != 200 or not body:
+        return False, f"Enphase token refresh HTTP {code}"
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return False, "Enphase token refresh unreadable"
+    access = data.get("access_token")
+    new_refresh = data.get("refresh_token")
+    if not access:
+        return False, "Enphase token refresh missing access_token"
+    _set_env_persistent("ENPHASE_ACCESS_TOKEN", str(access))
+    if new_refresh:
+        _set_env_persistent("ENPHASE_REFRESH_TOKEN", str(new_refresh))
+    return True, "refreshed"
+
+
+def _enphase_cloud_summary(force_refresh: bool = False) -> dict:
+    api_key = _env("ENPHASE_API_KEY")
+    system_id = _env("ENPHASE_SYSTEM_ID")
+    if force_refresh or not _env("ENPHASE_ACCESS_TOKEN"):
+        ok, note = _enphase_refresh_access_token()
+        if not ok:
+            return {"ok": False, "note": note, "source": "cloud"}
+    access = _env("ENPHASE_ACCESS_TOKEN")
+    url = (
+        f"https://api.enphaseenergy.com/api/v4/systems/{quote(system_id)}/summary"
+        f"?key={quote(api_key)}"
+    )
+    code, body, ms = http_get(
+        url,
+        timeout=max(HTTP_TIMEOUT, 8.0),
+        headers={"Authorization": f"Bearer {access}", "Accept": "application/json"},
+    )
+    if code == 401:
+        ok, note = _enphase_refresh_access_token()
+        if not ok:
+            return {"ok": False, "note": note, "latency_ms": round(ms, 1), "source": "cloud"}
+        access = _env("ENPHASE_ACCESS_TOKEN")
+        code, body, ms = http_get(
+            url,
+            timeout=max(HTTP_TIMEOUT, 8.0),
+            headers={"Authorization": f"Bearer {access}", "Accept": "application/json"},
+        )
+    if code != 200 or not body:
+        return {
+            "ok": False,
+            "note": f"Enphase cloud HTTP {code}",
+            "latency_ms": round(ms, 1),
+            "source": "cloud",
+        }
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {
+            "ok": False,
+            "note": "Enphase cloud unreadable",
+            "latency_ms": round(ms, 1),
+            "source": "cloud",
+        }
+    w_now = data.get("current_power")
     return {
         "ok": True,
         "w_now": w_now,
         "latency_ms": round(ms, 1),
-        "note": "Enphase live",
+        "note": "Enphase cloud",
+        "source": "cloud",
+        "energy_today": data.get("energy_today"),
+        "modules": data.get("modules"),
+        "size_w": data.get("size_w"),
+        "system_id": data.get("system_id") or _env("ENPHASE_SYSTEM_ID"),
     }
+
+
+def fetch_enphase_cloud() -> dict:
+    """
+    Cloud Monitoring API v4 backup. Rate-limited: default min 15 minutes between
+    live calls (~96/month) so Watt-plan free quota (~1000 hits) lasts.
+    Serves last good result while waiting.
+    """
+    if not _enphase_cloud_configured():
+        return {
+            "ok": False,
+            "note": "Set ENPHASE_API_KEY + OAuth tokens + ENPHASE_SYSTEM_ID for cloud backup",
+            "source": "cloud",
+        }
+    min_interval = _env_int("ENPHASE_CLOUD_MIN_INTERVAL_SEC", 900)
+    now = time.time()
+    with _ENPHASE_CLOUD_LOCK:
+        cached = _ENPHASE_CLOUD_CACHE.get("result")
+        at = float(_ENPHASE_CLOUD_CACHE.get("at") or 0.0)
+        if cached and cached.get("ok") and (now - at) < min_interval:
+            out = dict(cached)
+            out["note"] = "Enphase cloud (cached)"
+            out["cached"] = True
+            out["cache_age_s"] = int(now - at)
+            return out
+        result = _enphase_cloud_summary()
+        if result.get("ok"):
+            _ENPHASE_CLOUD_CACHE["at"] = now
+            _ENPHASE_CLOUD_CACHE["result"] = dict(result)
+            return result
+        # On failure, keep serving stale cache if we have one
+        if cached and cached.get("ok"):
+            out = dict(cached)
+            out["note"] = f"Enphase cloud stale · {result.get('note')}"
+            out["cached"] = True
+            out["stale"] = True
+            return out
+        return result
+
+
+def fetch_enphase_production() -> dict:
+    """Prefer local Envoy; fall back to rate-limited cloud API."""
+    local = fetch_enphase_local()
+    if local.get("ok") and local.get("w_now") is not None:
+        return local
+    cloud = fetch_enphase_cloud()
+    if cloud.get("ok") and cloud.get("w_now") is not None:
+        if local.get("note") and not cloud.get("cached"):
+            cloud = dict(cloud)
+            cloud["note"] = f"{cloud.get('note')} (local: {local.get('note')})"
+        return cloud
+    # Prefer the more useful failure note
+    if local.get("note") and cloud.get("note"):
+        return {
+            "ok": False,
+            "note": f"{local.get('note')} · {cloud.get('note')}",
+            "latency_ms": local.get("latency_ms") or cloud.get("latency_ms"),
+        }
+    return local if local.get("note") else cloud
 
 
 def fetch_solaredge_overview() -> dict:
@@ -350,7 +571,7 @@ def fetch_solaredge_overview() -> dict:
 
 
 def enrich_solar(svc_map: dict[str, dict]) -> dict:
-    """Enphase (LAN + token) and SolarEdge (cloud API key)."""
+    """Enphase (local Envoy, cloud backup) and SolarEdge (cloud API key)."""
     envoy = svc_map.get("Enphase Envoy") or {}
     host = _env("ENPHASE_HOST", "https://envoy.dataknife.net").rstrip("/")
     code, _body, ms = http_get(f"{host}/info")
@@ -364,8 +585,14 @@ def enrich_solar(svc_map: dict[str, dict]) -> dict:
         stats.append({"label": "Enphase", "value": _fmt_kw(enphase["w_now"])})
         total_w += float(enphase["w_now"] or 0)
         have_watts = True
+        if enphase.get("note"):
+            notes.append(str(enphase["note"]))
     elif code == 200 or envoy.get("status") == "ok":
         stats.append({"label": "Enphase", "value": "online"})
+        if enphase.get("note"):
+            notes.append(str(enphase["note"]))
+    elif enphase.get("ok") is False and _enphase_cloud_configured():
+        stats.append({"label": "Enphase", "value": "err"})
         if enphase.get("note"):
             notes.append(str(enphase["note"]))
     elif envoy.get("status") == "bad":
@@ -387,15 +614,20 @@ def enrich_solar(svc_map: dict[str, dict]) -> dict:
 
     if have_watts:
         stats.insert(0, {"label": "Total", "value": _fmt_kw(total_w)})
-        note = "Live production"
+        note = " · ".join(notes) if notes else "Live production"
     else:
-        note = " · ".join(notes) if notes else "Live kW need ENPHASE_TOKEN / SolarEdge API key"
+        note = (
+            " · ".join(notes)
+            if notes
+            else "Live kW need local ENPHASE_TOKEN and/or cloud OAuth + SolarEdge API key"
+        )
 
     return {
         "stats": stats,
         "note": note,
         "latency_ms": round(ms, 1) if ms else envoy.get("latency_ms"),
         "w_now": total_w if have_watts else None,
+        "enphase_source": enphase.get("source"),
     }
 
 
@@ -687,6 +919,156 @@ def derive_modes(svc_map: dict[str, dict]) -> dict:
     return {"power": power, "isp": internet}
 
 
+def build_energy(svc_map: dict[str, dict], modes: dict) -> dict:
+    """Detailed energy systems for the Energy tab + home-level production/SoC."""
+    enphase = fetch_enphase_production()
+    se = fetch_solaredge_overview()
+    tesla = enrich_tesla()
+    power = modes.get("power") or {}
+    systems: list[dict] = []
+    total_w = 0.0
+    have_watts = False
+
+    enphase_stats: list[dict] = []
+    if enphase.get("ok") and enphase.get("w_now") is not None:
+        enphase_stats.append({"label": "Now", "value": _fmt_kw(enphase["w_now"])})
+        total_w += float(enphase["w_now"] or 0)
+        have_watts = True
+    if isinstance(enphase.get("energy_today"), (int, float)):
+        enphase_stats.append({"label": "Today", "value": f"{float(enphase['energy_today']):.0f} Wh"})
+    if enphase.get("modules") is not None:
+        enphase_stats.append({"label": "Modules", "value": str(enphase["modules"])})
+    if isinstance(enphase.get("size_w"), (int, float)):
+        enphase_stats.append({"label": "Size", "value": _fmt_kw(enphase["size_w"])})
+    if enphase.get("system_id") or _env("ENPHASE_SYSTEM_ID"):
+        enphase_stats.append(
+            {"label": "System", "value": str(enphase.get("system_id") or _env("ENPHASE_SYSTEM_ID"))}
+        )
+    source = enphase.get("source") or ("cloud" if _enphase_cloud_configured() else "local")
+    if enphase.get("cached"):
+        source = "cached"
+    source_label = {
+        "local": "Local Envoy",
+        "cloud": "Cloud API",
+        "cached": "Cloud cached",
+    }.get(str(source), str(source))
+    if enphase.get("ok"):
+        enphase_status = "ok"
+    elif _enphase_cloud_configured() or _env("ENPHASE_TOKEN"):
+        enphase_status = "warn"
+    else:
+        enphase_status = "unknown"
+    if not enphase_stats:
+        enphase_stats = [{"label": "Now", "value": "—"}]
+    role = "Array · Enphase"
+    if enphase.get("modules") and enphase.get("size_w"):
+        role = f"Array · {enphase['modules']} modules · {_fmt_kw(enphase['size_w'])}"
+    systems.append(
+        {
+            "id": "enphase",
+            "name": "Enphase",
+            "kind": "solar",
+            "role": role,
+            "status": enphase_status,
+            "source": source,
+            "source_label": source_label,
+            "stats": enphase_stats,
+            "note": enphase.get("note") or "",
+            "href": _env("ENPHASE_HOST", "https://envoy.dataknife.net"),
+            "link_label": "Open Envoy",
+        }
+    )
+
+    se_stats: list[dict] = []
+    if se.get("ok") and se.get("w_now") is not None:
+        se_stats.append({"label": "Now", "value": _fmt_kw(se["w_now"])})
+        total_w += float(se["w_now"] or 0)
+        have_watts = True
+        se_status = "ok"
+        se_note = se.get("note") or "SolarEdge live"
+    elif _env("SOLAREDGE_API_KEY"):
+        se_status = "warn"
+        se_note = se.get("note") or "SolarEdge API error"
+        se_stats = [{"label": "Now", "value": "err"}]
+    else:
+        se_status = "unknown"
+        se_note = "Add SOLAREDGE_API_KEY + SITE_ID (not on home LAN)"
+        se_stats = [{"label": "LAN", "value": "not seen"}]
+    systems.append(
+        {
+            "id": "solaredge",
+            "name": "SolarEdge",
+            "kind": "solar",
+            "role": "Array · cloud",
+            "status": se_status,
+            "source": "cloud" if _env("SOLAREDGE_API_KEY") else "none",
+            "source_label": "Cloud API" if _env("SOLAREDGE_API_KEY") else "Not configured",
+            "stats": se_stats,
+            "note": se_note,
+            "href": "https://monitoring.solaredge.com/",
+            "link_label": "Monitoring",
+        }
+    )
+
+    soc = tesla.get("soc_pct")
+    if soc is None:
+        soc = power.get("soc_pct")
+    tesla_stats = list(tesla.get("stats") or [])
+    if not tesla_stats:
+        tesla_stats = [{"label": "Battery", "value": "—"}]
+    if tesla.get("grid_status"):
+        tesla_stats.append({"label": "Grid", "value": str(tesla["grid_status"])})
+    tesla_ok = bool(tesla.get("stats")) or (svc_map.get("Tesla Energy") or {}).get("status") == "ok"
+    systems.append(
+        {
+            "id": "tesla",
+            "name": "Tesla Powerwall",
+            "kind": "battery",
+            "role": "Storage",
+            "status": power.get("status") or ("ok" if tesla_ok else "unknown"),
+            "source": "local" if tesla_ok else "none",
+            "source_label": "Local gateway" if tesla_ok else "Not answering",
+            "stats": tesla_stats,
+            "note": tesla.get("note") or power.get("detail") or "",
+            "href": _env("TESLA_HOST", "https://tesla.dataknife.net"),
+            "link_label": "Open gateway",
+        }
+    )
+
+    production_detail = "Solar right now"
+    if have_watts:
+        bits = []
+        if enphase.get("ok"):
+            bits.append("Enphase")
+        if se.get("ok"):
+            bits.append("SolarEdge")
+        if bits:
+            production_detail = " + ".join(bits)
+        if enphase.get("cached"):
+            production_detail += " · cached"
+
+    note_bits = []
+    if not _env("ENPHASE_TOKEN") and _enphase_cloud_configured():
+        note_bits.append("Enphase via cloud backup (rate-limited)")
+    elif _env("ENPHASE_TOKEN"):
+        note_bits.append("Enphase prefers local Envoy JWT")
+    if not _env("SOLAREDGE_API_KEY"):
+        note_bits.append("SolarEdge needs monitoring API key")
+    if soc is None and not _env("TESLA_EMAIL") and not _env("TESLA_AUTH_COOKIE"):
+        note_bits.append("Tesla SoC needs gateway login")
+
+    return {
+        "production_w": total_w if have_watts else None,
+        "production_status": "ok" if have_watts else "unknown",
+        "production_detail": production_detail,
+        "soc_pct": soc,
+        "battery_status": power.get("status") or ("ok" if isinstance(soc, (int, float)) else "unknown"),
+        "battery_detail": power.get("detail") or ("State of charge" if soc is not None else "Powerwall"),
+        "systems": systems,
+        "note": " · ".join(note_bits),
+    }
+
+
 def push_mode_history(modes: dict) -> list[dict]:
     sample = {
         "t": int(time.time()),
@@ -871,6 +1253,7 @@ def build_home(status_payload: dict | None = None) -> dict:
 
     modes = derive_modes(svc_map)
     history = push_mode_history(modes)
+    energy = build_energy(svc_map, modes)
 
     # Plain-language overlays for home power/internet cards.
     for domain in domains_out:
@@ -881,6 +1264,15 @@ def build_home(status_payload: dict | None = None) -> dict:
             ]
             domain["note"] = modes["power"].get("detail") or domain.get("note")
             domain["mode"] = modes["power"]["value"]
+            domain["href"] = "#view-energy"
+        if domain.get("id") == "solar":
+            domain["href"] = "#view-energy"
+            if energy.get("production_w") is not None:
+                domain["stats"] = [
+                    {"label": "Now", "value": _fmt_kw(energy["production_w"])},
+                    *list(domain.get("stats") or [])[:2],
+                ]
+                domain["note"] = energy.get("production_detail") or domain.get("note")
         if domain.get("id") == "internet" and modes.get("isp"):
             domain["stats"] = [
                 {"label": "Using", "value": modes["isp"]["label"]},
@@ -913,11 +1305,13 @@ def build_home(status_payload: dict | None = None) -> dict:
         "by_site": by_site,
         "modes": modes,
         "history": history,
+        "energy": energy,
         "weather": weather_bundle.get("weather"),
         "quakes": weather_bundle.get("quakes") or [],
         "weather_note": weather_bundle.get("note") or "",
-        "energy_note": (
-            "Fill deploy/private/energy.env (TESLA_*, ENPHASE_TOKEN, SOLAREDGE_*) "
+        "energy_note": energy.get("note")
+        or (
+            "Fill deploy/private/energy.env (TESLA_*, ENPHASE local/cloud, SOLAREDGE_*) "
             "then ./scripts/apply-energy-secret.sh for the cluster."
         ),
     }

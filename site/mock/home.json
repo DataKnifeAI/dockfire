@@ -16,23 +16,31 @@
           "id": "solar",
           "site": "home",
           "label": "Solar",
-          "href": "#view-home",
+          "href": "#view-energy",
           "status": "ok",
           "members": [],
           "stats": [
             {
-              "label": "Panels",
-              "value": "online"
+              "label": "Now",
+              "value": "0.00 kW"
+            },
+            {
+              "label": "Enphase",
+              "value": "cloud"
+            },
+            {
+              "label": "SolarEdge",
+              "value": "not on LAN"
             }
           ],
-          "note": "Solar gateway is up",
+          "note": "Enphase \u00b7 night / zero now",
           "latency_ms": null
         },
         {
           "id": "power",
           "site": "home",
           "label": "Power",
-          "href": "#view-home",
+          "href": "#view-energy",
           "status": "ok",
           "members": [],
           "stats": [
@@ -42,10 +50,10 @@
             },
             {
               "label": "Battery",
-              "value": "online"
+              "value": "72%"
             }
           ],
-          "note": "House power looks normal",
+          "note": "Grid \u00b7 battery 72%",
           "latency_ms": null,
           "mode": "grid"
         },
@@ -192,27 +200,31 @@
       "id": "solar",
       "site": "home",
       "label": "Solar",
-      "href": "#view-home",
+      "href": "#view-energy",
       "status": "ok",
       "members": [],
       "stats": [
         {
+          "label": "Now",
+          "value": "0.00 kW"
+        },
+        {
           "label": "Enphase",
-          "value": "online"
+          "value": "cloud"
         },
         {
           "label": "SolarEdge",
           "value": "not on LAN"
         }
       ],
-      "note": "Live kW need login \u00b7 two arrays: Enphase + SolarEdge",
+      "note": "Enphase \u00b7 night / zero now",
       "latency_ms": null
     },
     {
       "id": "power",
       "site": "home",
       "label": "Power",
-      "href": "#view-home",
+      "href": "#view-energy",
       "status": "ok",
       "members": [],
       "stats": [
@@ -222,10 +234,10 @@
         },
         {
           "label": "Battery",
-          "value": "online"
+          "value": "72%"
         }
       ],
-      "note": "House power looks normal",
+      "note": "Grid \u00b7 battery 72%",
       "latency_ms": null,
       "mode": "grid"
     },
@@ -361,23 +373,31 @@
           "id": "solar",
           "site": "home",
           "label": "Solar",
-          "href": "#view-home",
+          "href": "#view-energy",
           "status": "ok",
           "members": [],
           "stats": [
             {
-              "label": "Panels",
-              "value": "online"
+              "label": "Now",
+              "value": "0.00 kW"
+            },
+            {
+              "label": "Enphase",
+              "value": "cloud"
+            },
+            {
+              "label": "SolarEdge",
+              "value": "not on LAN"
             }
           ],
-          "note": "Solar gateway is up",
+          "note": "Enphase \u00b7 night / zero now",
           "latency_ms": null
         },
         {
           "id": "power",
           "site": "home",
           "label": "Power",
-          "href": "#view-home",
+          "href": "#view-energy",
           "status": "ok",
           "members": [],
           "stats": [
@@ -387,10 +407,10 @@
             },
             {
               "label": "Battery",
-              "value": "online"
+              "value": "72%"
             }
           ],
-          "note": "House power looks normal",
+          "note": "Grid \u00b7 battery 72%",
           "latency_ms": null,
           "mode": "grid"
         },
@@ -530,8 +550,9 @@
     "power": {
       "value": "grid",
       "label": "Grid",
-      "detail": "House power looks normal",
-      "status": "ok"
+      "detail": "Grid \u00b7 battery 72%",
+      "status": "ok",
+      "soc_pct": 72
     },
     "isp": {
       "value": "primary",
@@ -587,5 +608,98 @@
   },
   "quakes": [],
   "weather_note": "",
-  "energy_note": "Battery % and solar kW need Tesla / Enphase / SolarEdge login. SolarEdge is not visible on the home LAN right now."
+  "energy_note": "Enphase via cloud backup (rate-limited) \u00b7 SolarEdge needs monitoring API key",
+  "energy": {
+    "production_w": 0,
+    "production_status": "ok",
+    "production_detail": "Enphase \u00b7 night / zero now",
+    "soc_pct": 72,
+    "battery_status": "ok",
+    "battery_detail": "Grid \u00b7 battery 72%",
+    "systems": [
+      {
+        "id": "enphase",
+        "name": "Enphase",
+        "kind": "solar",
+        "role": "Array \u00b7 6\u00d7 IQ7X \u00b7 1.98 kW",
+        "status": "ok",
+        "source": "cloud",
+        "source_label": "Cloud API",
+        "stats": [
+          {
+            "label": "Now",
+            "value": "0.00 kW"
+          },
+          {
+            "label": "Today",
+            "value": "1799 Wh"
+          },
+          {
+            "label": "Modules",
+            "value": "6"
+          },
+          {
+            "label": "Size",
+            "value": "1.98 kW"
+          },
+          {
+            "label": "System",
+            "value": "1869443"
+          }
+        ],
+        "note": "Cloud backup (local Envoy JWT not set). Rate-limited ~15 min.",
+        "href": "https://envoy.dataknife.net/",
+        "link_label": "Open Envoy"
+      },
+      {
+        "id": "solaredge",
+        "name": "SolarEdge",
+        "kind": "solar",
+        "role": "Array \u00b7 cloud",
+        "status": "unknown",
+        "source": "none",
+        "source_label": "Not configured",
+        "stats": [
+          {
+            "label": "LAN",
+            "value": "not seen"
+          },
+          {
+            "label": "API",
+            "value": "no key"
+          }
+        ],
+        "note": "Not on home LAN. Add SOLAREDGE_API_KEY + SITE_ID for cloud watts.",
+        "href": "https://monitoring.solaredge.com/",
+        "link_label": "Monitoring"
+      },
+      {
+        "id": "tesla",
+        "name": "Tesla Powerwall",
+        "kind": "battery",
+        "role": "Storage",
+        "status": "ok",
+        "source": "local",
+        "source_label": "Local gateway",
+        "stats": [
+          {
+            "label": "Charge",
+            "value": "72%"
+          },
+          {
+            "label": "Source",
+            "value": "Grid"
+          },
+          {
+            "label": "Up",
+            "value": "14d3h"
+          }
+        ],
+        "note": "Gateway online \u00b7 SoC from local login (mock).",
+        "href": "https://tesla.dataknife.net/",
+        "link_label": "Open gateway"
+      }
+    ],
+    "note": "Enphase via cloud backup (rate-limited) \u00b7 SolarEdge needs monitoring API key"
+  }
 }

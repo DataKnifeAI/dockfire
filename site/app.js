@@ -1,13 +1,11 @@
-const ICON_VER = "23";
+const ICON_VER = "26";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
 const VIEW_KEY = "dockfire-view";
 const HISTORY_KEY = "dockfire-mode-history";
-const VIEWS = ["home", "ranch", "favorites", "automation", "infra", "guide"];
+const VIEWS = ["home", "energy", "ranch", "automation", "infra", "guide"];
 
-const FAVORITE_SECTIONS = new Set(["shares", "games", "external"]);
-const FAVORITE_FROM_HOME = new Set(["Plex (lab)", "Plex (app)", "Brother printer", "Sign in"]);
 const HOME_SERVICE_NAMES = [
   "Plex (app)",
   "Movies",
@@ -19,6 +17,7 @@ const HOME_SERVICE_NAMES = [
   "Satisfactory",
   "Brother printer",
 ];
+const HOME_CONNECT_CATEGORIES = new Set(["Shares", "Game server", "Print"]);
 const AUTOMATION_NAMES = new Set([
   "Lutron",
   "SmartThings",
@@ -30,27 +29,42 @@ const els = {
   summary: document.getElementById("summary"),
   refresh: document.getElementById("refresh"),
   themeToggle: document.getElementById("theme-toggle"),
-  search: document.getElementById("search"),
-  audienceFilters: document.getElementById("audience-filters"),
-  favoritesGrid: document.getElementById("favorites-grid"),
   automationGrid: document.getElementById("automation-grid"),
   localGrid: document.getElementById("local-grid"),
   homeServicesGrid: document.getElementById("home-services-grid"),
+  homeServiceDetail: document.getElementById("home-service-detail"),
   heroWelcome: document.getElementById("hero-welcome"),
   pulseSummary: document.getElementById("pulse-summary"),
-  pulseBoard: document.getElementById("pulse-board"),
   pulseIssues: document.getElementById("pulse-issues"),
   pulseIssuesBody: document.getElementById("pulse-issues-body"),
   providersGrid: document.getElementById("providers-grid"),
   emergencyGrid: document.getElementById("emergency-grid"),
   emergencyLead: document.getElementById("emergency-lead"),
-  modePower: document.getElementById("mode-power"),
-  modePowerValue: document.getElementById("mode-power-value"),
-  modePowerDetail: document.getElementById("mode-power-detail"),
+  modeHealth: document.getElementById("mode-health"),
+  modeHealthValue: document.getElementById("mode-health-value"),
+  modeHealthDetail: document.getElementById("mode-health-detail"),
+  modeProduction: document.getElementById("mode-production"),
+  modeProductionValue: document.getElementById("mode-production-value"),
+  modeProductionDetail: document.getElementById("mode-production-detail"),
+  modeBattery: document.getElementById("mode-battery"),
+  modeBatteryValue: document.getElementById("mode-battery-value"),
+  modeBatteryDetail: document.getElementById("mode-battery-detail"),
   modeIsp: document.getElementById("mode-isp"),
   modeIspValue: document.getElementById("mode-isp-value"),
   modeIspDetail: document.getElementById("mode-isp-detail"),
   historyChart: document.getElementById("history-chart"),
+  energySummary: document.getElementById("energy-summary"),
+  energySumProduction: document.getElementById("energy-sum-production"),
+  energySumProductionValue: document.getElementById("energy-sum-production-value"),
+  energySumProductionDetail: document.getElementById("energy-sum-production-detail"),
+  energySumBattery: document.getElementById("energy-sum-battery"),
+  energySumBatteryValue: document.getElementById("energy-sum-battery-value"),
+  energySumBatteryDetail: document.getElementById("energy-sum-battery-detail"),
+  energySumGrid: document.getElementById("energy-sum-grid"),
+  energySumGridValue: document.getElementById("energy-sum-grid-value"),
+  energySumGridDetail: document.getElementById("energy-sum-grid-detail"),
+  energySystems: document.getElementById("energy-systems"),
+  energyNote: document.getElementById("energy-note"),
   chartDonut: document.getElementById("chart-donut"),
   chartLegend: document.getElementById("chart-legend"),
   chartBars: document.getElementById("chart-bars"),
@@ -313,12 +327,10 @@ function showView(view) {
     tab.classList.toggle("active", active);
     if (tab.getAttribute("role") === "tab") tab.setAttribute("aria-selected", active ? "true" : "false");
   });
-  if (view === "favorites") renderCatalogSections();
   history.replaceState(null, "", `#view-${view}`);
 }
 
 function itemMatches(item) {
-  if (activeAudience !== "all" && item.audience && item.audience !== activeAudience) return false;
   if (!searchQuery) return true;
   const hay = [item.name, item.blurb, item.help, item.category, item.audience, item.join]
     .filter(Boolean)
@@ -327,24 +339,12 @@ function itemMatches(item) {
   return hay.includes(searchQuery);
 }
 
-function renderAudienceFilters() {
-  if (!els.audienceFilters) return;
-  els.audienceFilters.replaceChildren();
-  for (const key of ["all", "everyone", "support", "admin"]) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "audience-chip" + (key === activeAudience ? " active" : "");
-    btn.textContent = AUDIENCE_LABELS[key];
-    btn.addEventListener("click", () => {
-      activeAudience = key;
-      renderAudienceFilters();
-      renderCatalogSections();
-    });
-    els.audienceFilters.appendChild(btn);
-  }
+function isHomeConnectItem(item) {
+  return HOME_CONNECT_CATEGORIES.has(item.category) || Boolean(item.connect || item.join);
 }
 
-function renderLaunchCard(item) {
+function renderLaunchCard(item, opts = {}) {
+  const homeConnect = Boolean(opts.homeConnect);
   const node = templates.launch.content.firstElementChild.cloneNode(true);
   const status = item.statusName ? statusByName.get(item.statusName) : null;
   const dot = node.querySelector("[data-status]");
@@ -369,16 +369,24 @@ function renderLaunchCard(item) {
   setTextOrHide(node.querySelector(".launch-help"), item.help);
 
   const connectBox = node.querySelector(".launch-connect");
-  const detailFields = {
-    join: item.join,
-    admin: item.adminDetail,
-    linux: item.connect?.linux,
-    windows: item.connect?.windows,
-  };
+  // On Home, show how-to-connect only (join / OS mounts). Admin pages live under Infra.
+  const detailFields = homeConnect
+    ? {
+        join: item.join,
+        linux: item.connect?.linux,
+        windows: item.connect?.windows,
+      }
+    : {
+        join: item.join,
+        admin: item.adminDetail,
+        linux: item.connect?.linux,
+        windows: item.connect?.windows,
+      };
   let hasDetails = false;
   for (const [key, value] of Object.entries(detailFields)) {
     const row = connectBox.querySelector(`[data-row="${key}"]`);
     const cmd = connectBox.querySelector(`[data-field="${key}"]`);
+    if (!row || !cmd) continue;
     if (value) {
       row.hidden = false;
       cmd.textContent = value;
@@ -387,23 +395,45 @@ function renderLaunchCard(item) {
       row.hidden = true;
     }
   }
+  // Hide unused admin row when in home-connect mode
+  const adminRow = connectBox.querySelector(`[data-row="admin"]`);
+  if (homeConnect && adminRow) adminRow.hidden = true;
   connectBox.hidden = !hasDetails;
 
   setTextOrHide(node.querySelector(".launch-category"), item.category || "");
   setTextOrHide(node.querySelector(".launch-audience"), AUDIENCE_LABELS[item.audience] || item.audience || "");
 
   const link = node.querySelector(".launch-link");
-  if (item.url) {
+  if (homeConnect && isHomeConnectItem(item)) {
+    link.hidden = false;
+    link.href = "#view-infra";
+    link.textContent = "Infra";
+    link.removeAttribute("target");
+    link.removeAttribute("rel");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      showView("infra");
+    });
+  } else if (item.url) {
     link.hidden = false;
     link.href = item.url;
     link.textContent = item.linkLabel || "Open";
+    if (item.url.startsWith("#view-")) {
+      link.removeAttribute("target");
+      link.removeAttribute("rel");
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const view = item.url.replace("#view-", "");
+        if (VIEWS.includes(view)) showView(view);
+      });
+    }
   } else {
     link.hidden = true;
   }
   return node;
 }
 
-function fillLaunchGrid(container, items) {
+function fillLaunchGrid(container, items, opts = {}) {
   if (!container) return;
   container.replaceChildren();
   const visible = items.filter(itemMatches);
@@ -414,24 +444,11 @@ function fillLaunchGrid(container, items) {
     container.appendChild(empty);
     return;
   }
-  for (const item of visible) container.appendChild(renderLaunchCard(item));
+  for (const item of visible) container.appendChild(renderLaunchCard(item, opts));
 }
 
 function sectionById(id) {
   return (catalog?.sections || []).find((s) => s.id === id);
-}
-
-function collectFavorites() {
-  const items = [];
-  for (const section of catalog?.sections || []) {
-    if (FAVORITE_SECTIONS.has(section.id)) items.push(...(section.items || []));
-    if (section.id === "home") {
-      for (const item of section.items || []) {
-        if (FAVORITE_FROM_HOME.has(item.name)) items.push(item);
-      }
-    }
-  }
-  return items;
 }
 
 function collectAutomation() {
@@ -453,7 +470,6 @@ function collectAutomation() {
 
 function renderCatalogSections() {
   const local = sectionById("local");
-  fillLaunchGrid(els.favoritesGrid, collectFavorites());
   fillLaunchGrid(els.automationGrid, collectAutomation());
   if (local) fillLaunchGrid(els.localGrid, local.items || []);
 }
@@ -463,7 +479,6 @@ function renderCatalog(data) {
   if (data.welcome && els.heroWelcome) {
     // Keep home copy plain; catalog welcome can stay for search contexts.
   }
-  renderAudienceFilters();
   renderCatalogSections();
   renderHomeServices();
 }
@@ -490,15 +505,153 @@ function historyClass(kind, value) {
   return "is-down";
 }
 
-function renderModes(modes = {}) {
+function fmtKw(watts) {
+  if (watts == null || Number.isNaN(Number(watts))) return "—";
+  return `${(Number(watts) / 1000).toFixed(2)} kW`;
+}
+
+function fmtSoc(pct) {
+  if (pct == null || Number.isNaN(Number(pct))) return "—";
+  return `${Math.round(Number(pct))}%`;
+}
+
+function renderModes(home = {}) {
+  const modes = home.modes || {};
+  const energy = home.energy || {};
   const power = modes.power || {};
   const isp = modes.isp || {};
-  if (els.modePowerValue) els.modePowerValue.textContent = power.label || "—";
-  if (els.modePowerDetail) els.modePowerDetail.textContent = power.detail || "Grid or battery";
-  if (els.modePower) els.modePower.dataset.status = power.status || "unknown";
+  const summary = siteBundle(home, "home").summary || home.summary || {};
+  const bad = summary.bad || 0;
+  const warn = summary.warn || 0;
+  const ok = summary.ok || 0;
+  const healthStatus = bad > 0 ? "bad" : warn > 0 ? "warn" : ok > 0 ? "ok" : "unknown";
+  const healthValue = bad > 0 ? `${bad} issue${bad === 1 ? "" : "s"}` : warn > 0 ? `${warn} check` : "OK";
+  const healthDetail =
+    bad > 0 ? "Needs attention" : warn > 0 ? "Something to review" : `${ok} area${ok === 1 ? "" : "s"} healthy`;
+
+  const productionW = energy.production_w ?? energy.productionW;
+  const productionStatus = energy.production_status || (productionW != null ? "ok" : "unknown");
+  const productionDetail = energy.production_detail || "Solar right now";
+
+  const soc = energy.soc_pct ?? power.soc_pct;
+  const batteryStatus =
+    energy.battery_status || power.status || (soc != null ? "ok" : "unknown");
+  const batteryDetail =
+    energy.battery_detail || power.detail || (soc != null ? "State of charge" : "Powerwall SoC");
+
+  if (els.modeHealthValue) els.modeHealthValue.textContent = healthValue;
+  if (els.modeHealthDetail) els.modeHealthDetail.textContent = healthDetail;
+  if (els.modeHealth) els.modeHealth.dataset.status = healthStatus;
+
+  if (els.modeProductionValue) els.modeProductionValue.textContent = fmtKw(productionW);
+  if (els.modeProductionDetail) els.modeProductionDetail.textContent = productionDetail;
+  if (els.modeProduction) els.modeProduction.dataset.status = productionStatus;
+
+  if (els.modeBatteryValue) els.modeBatteryValue.textContent = fmtSoc(soc);
+  if (els.modeBatteryDetail) els.modeBatteryDetail.textContent = batteryDetail;
+  if (els.modeBattery) els.modeBattery.dataset.status = batteryStatus;
+
   if (els.modeIspValue) els.modeIspValue.textContent = isp.label || "—";
   if (els.modeIspDetail) els.modeIspDetail.textContent = isp.detail || "Fiber or backup";
   if (els.modeIsp) els.modeIsp.dataset.status = isp.status || "unknown";
+}
+
+function renderEnergy(home = {}) {
+  const energy = home.energy || {};
+  const modes = home.modes || {};
+  const power = modes.power || {};
+  const productionW = energy.production_w;
+  const soc = energy.soc_pct ?? power.soc_pct;
+
+  if (els.energySumProductionValue) els.energySumProductionValue.textContent = fmtKw(productionW);
+  if (els.energySumProductionDetail) {
+    els.energySumProductionDetail.textContent = energy.production_detail || "All arrays";
+  }
+  if (els.energySumProduction) {
+    els.energySumProduction.dataset.status = energy.production_status || (productionW != null ? "ok" : "unknown");
+  }
+
+  if (els.energySumBatteryValue) els.energySumBatteryValue.textContent = fmtSoc(soc);
+  if (els.energySumBatteryDetail) {
+    els.energySumBatteryDetail.textContent = energy.battery_detail || power.detail || "State of charge";
+  }
+  if (els.energySumBattery) {
+    els.energySumBattery.dataset.status = energy.battery_status || power.status || (soc != null ? "ok" : "unknown");
+  }
+
+  if (els.energySumGridValue) els.energySumGridValue.textContent = power.label || "—";
+  if (els.energySumGridDetail) els.energySumGridDetail.textContent = power.detail || "Grid or battery";
+  if (els.energySumGrid) els.energySumGrid.dataset.status = power.status || "unknown";
+
+  if (els.energyNote) {
+    const note = energy.note || home.energy_note || "";
+    els.energyNote.textContent = note;
+    els.energyNote.hidden = !note;
+  }
+
+  if (!els.energySystems) return;
+  els.energySystems.replaceChildren();
+  const systems = energy.systems || [];
+  if (!systems.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-hint";
+    empty.textContent = "No energy systems in this snapshot yet.";
+    els.energySystems.appendChild(empty);
+    return;
+  }
+
+  for (const sys of systems) {
+    const card = document.createElement("article");
+    card.className = "energy-system";
+    card.dataset.status = sys.status || "unknown";
+    card.setAttribute("role", "listitem");
+
+    const top = document.createElement("div");
+    top.className = "energy-system-top";
+    const titleWrap = document.createElement("div");
+    const name = document.createElement("h3");
+    name.className = "energy-system-name";
+    name.textContent = sys.name || "System";
+    const kind = document.createElement("p");
+    kind.className = "energy-system-kind";
+    kind.textContent = sys.kind || sys.role || "energy";
+    titleWrap.append(name, kind);
+
+    const badge = document.createElement("span");
+    const source = (sys.source || "unknown").toLowerCase();
+    badge.className = `energy-system-badge is-${source}`;
+    badge.textContent = sys.source_label || sys.source || "—";
+    top.append(titleWrap, badge);
+
+    const dl = document.createElement("dl");
+    dl.className = "energy-system-stats";
+    for (const row of sys.stats || []) {
+      const dt = document.createElement("dt");
+      dt.textContent = row.label || "";
+      const dd = document.createElement("dd");
+      dd.textContent = row.value ?? "—";
+      dl.append(dt, dd);
+    }
+
+    const note = document.createElement("p");
+    note.className = "energy-system-note";
+    if (sys.note) note.textContent = sys.note;
+    else note.hidden = true;
+
+    const actions = document.createElement("div");
+    actions.className = "energy-system-actions";
+    if (sys.href) {
+      const a = document.createElement("a");
+      a.href = sys.href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = sys.link_label || "Open device";
+      actions.appendChild(a);
+    }
+
+    card.append(top, dl, note, actions);
+    els.energySystems.appendChild(card);
+  }
 }
 
 function renderHistoryChart(samples = []) {
@@ -578,9 +731,97 @@ function collectHomeServices() {
   return HOME_SERVICE_NAMES.map((n) => byName.get(n)).filter(Boolean);
 }
 
+function showHomeServiceDetail(item) {
+  const panel = els.homeServiceDetail;
+  if (!panel) return;
+  panel.hidden = false;
+  panel.replaceChildren();
+
+  const head = document.createElement("div");
+  head.className = "service-detail-head";
+  const title = document.createElement("h3");
+  title.className = "service-detail-title";
+  title.textContent = item.name;
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "service-detail-close";
+  close.textContent = "Close";
+  close.addEventListener("click", () => {
+    panel.hidden = true;
+    panel.replaceChildren();
+    els.homeServicesGrid?.querySelectorAll(".service-chip.is-active").forEach((el) => {
+      el.classList.remove("is-active");
+      el.setAttribute("aria-expanded", "false");
+    });
+  });
+  head.append(title, close);
+
+  if (item.blurb) {
+    const blurb = document.createElement("p");
+    blurb.className = "service-detail-blurb";
+    blurb.textContent = item.blurb;
+    panel.append(head, blurb);
+  } else {
+    panel.appendChild(head);
+  }
+
+  if (item.help) {
+    const help = document.createElement("p");
+    help.className = "service-detail-help";
+    help.textContent = item.help;
+    panel.appendChild(help);
+  }
+
+  const rows = [];
+  if (item.join) rows.push(["Join", item.join]);
+  if (item.connect?.linux) rows.push(["Linux", item.connect.linux]);
+  if (item.connect?.windows) rows.push(["Windows", item.connect.windows]);
+  if (rows.length) {
+    const box = document.createElement("div");
+    box.className = "launch-connect";
+    for (const [label, value] of rows) {
+      const row = document.createElement("p");
+      row.className = "connect-row";
+      const os = document.createElement("span");
+      os.className = "connect-os";
+      os.textContent = label;
+      const cmd = document.createElement("code");
+      cmd.className = "connect-cmd";
+      cmd.textContent = value;
+      row.append(os, cmd);
+      box.appendChild(row);
+    }
+    panel.appendChild(box);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "service-detail-actions";
+  if (isHomeConnectItem(item)) {
+    const infra = document.createElement("button");
+    infra.type = "button";
+    infra.className = "refresh";
+    infra.textContent = "Infra";
+    infra.addEventListener("click", () => showView("infra"));
+    actions.appendChild(infra);
+  } else if (item.url) {
+    const open = document.createElement("a");
+    open.className = "refresh";
+    open.href = item.url;
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    open.textContent = item.linkLabel || "Open";
+    actions.appendChild(open);
+  }
+  if (actions.childNodes.length) panel.appendChild(actions);
+}
+
 function renderHomeServices() {
   if (!els.homeServicesGrid) return;
   els.homeServicesGrid.replaceChildren();
+  if (els.homeServiceDetail) {
+    els.homeServiceDetail.hidden = true;
+    els.homeServiceDetail.replaceChildren();
+  }
   const items = collectHomeServices();
   if (!items.length) {
     const empty = document.createElement("p");
@@ -590,23 +831,11 @@ function renderHomeServices() {
     return;
   }
   for (const item of items) {
-    const a = document.createElement(item.url ? "a" : "div");
-    a.className = "service-chip";
-    a.setAttribute("role", "listitem");
-    if (item.url) {
-      if (item.url.startsWith("#")) {
-        a.href = item.url;
-        a.addEventListener("click", (e) => {
-          e.preventDefault();
-          const view = item.url.replace("#view-", "");
-          if (VIEWS.includes(view)) showView(view);
-        });
-      } else {
-        a.href = item.url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-      }
-    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "service-chip";
+    btn.setAttribute("role", "listitem");
+    btn.setAttribute("aria-expanded", "false");
     const status = item.statusName ? statusByName.get(item.statusName) : null;
     const dot = document.createElement("span");
     dot.className = `pulse-card-dot is-${status?.status || "external"}`;
@@ -618,8 +847,25 @@ function renderHomeServices() {
     const name = document.createElement("span");
     name.className = "service-chip-name";
     name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
-    a.append(dot, img, name);
-    els.homeServicesGrid.appendChild(a);
+    btn.append(dot, img, name);
+    btn.addEventListener("click", () => {
+      const wasActive = btn.classList.contains("is-active");
+      els.homeServicesGrid.querySelectorAll(".service-chip.is-active").forEach((el) => {
+        el.classList.remove("is-active");
+        el.setAttribute("aria-expanded", "false");
+      });
+      if (wasActive) {
+        if (els.homeServiceDetail) {
+          els.homeServiceDetail.hidden = true;
+          els.homeServiceDetail.replaceChildren();
+        }
+        return;
+      }
+      btn.classList.add("is-active");
+      btn.setAttribute("aria-expanded", "true");
+      showHomeServiceDetail(item);
+    });
+    els.homeServicesGrid.appendChild(btn);
   }
 }
 
@@ -839,10 +1085,10 @@ function renderHomePulse(home) {
   }
 
   updateScene(domains, document.getElementById("view-home") || document);
-  renderModes(home.modes || {});
+  renderModes(home);
+  renderEnergy(home);
   renderHistoryChart(mergeHistory(home.history || []));
   renderWeather(home);
-  fillPulseBoard(els.pulseBoard, domains);
   fillIssues(els.pulseIssues, els.pulseIssuesBody, bundle.issues || []);
   renderProviders(home, "home");
   renderHomeServices();
@@ -1149,6 +1395,14 @@ document.querySelectorAll(".scene-node").forEach((node) => {
   });
 });
 
+document.querySelectorAll("a.mode-card[href^='#view-']").forEach((el) => {
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    const view = el.getAttribute("href").replace("#view-", "");
+    if (VIEWS.includes(view)) showView(view);
+  });
+});
+
 const hashView = (location.hash || "").replace(/^#view-/, "").replace(/^#/, "");
 const savedView = (() => {
   try {
@@ -1157,8 +1411,12 @@ const savedView = (() => {
     return null;
   }
 })();
-const initial = VIEWS.includes(hashView) ? hashView : VIEWS.includes(savedView) ? savedView : "home";
-showView(initial);
+const initial = VIEWS.includes(hashView)
+  ? hashView
+  : VIEWS.includes(savedView)
+    ? savedView
+    : "home";
+showView(initial === "favorites" ? "home" : initial);
 
 fetchJson("/catalog.json")
   .then(renderCatalog)

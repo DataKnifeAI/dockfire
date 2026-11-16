@@ -65,7 +65,7 @@
         {
           "name": "Enphase Envoy",
           "blurb": "One of two solar systems — Enphase gateway on the house network.",
-          "help": "Local /info answers without login. Live production (kW) needs an Enphase token. Second array is SolarEdge (not seen on LAN yet).",
+          "help": "Local Envoy /info answers without login. Live kW prefers a local owner JWT; cloud Monitoring API v4 is a rate-limited backup. Details are on the Energy tab.",
           "url": "https://envoy.dataknife.net/",
           "linkLabel": "Open Envoy",
           "audience": "everyone",

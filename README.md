@@ -53,8 +53,7 @@ Or: `docker compose up --build -d`
 
 ```bash
 cp deploy/private/energy.env.example deploy/private/energy.env
-# edit: TESLA_EMAIL/PASSWORD (or TESLA_AUTH_COOKIE), ENPHASE_TOKEN,
-#       SOLAREDGE_API_KEY + SOLAREDGE_SITE_ID
+# edit: TESLA_*, ENPHASE local JWT and/or cloud OAuth, SOLAREDGE_*
 ```
 
 Local compose loads `deploy/private/energy.env` automatically.
@@ -66,8 +65,8 @@ Push the same values to Kubernetes (never commit the file):
 kubectl -n dockfire rollout restart deploy/dockfire
 ```
 
-Enphase owner token: Enlighten → entrez auth token for your Envoy serial (~1 year).  
-SolarEdge: monitoring portal → Site Access → API Access.
+**Enphase:** prefer local Envoy JWT (`ENPHASE_TOKEN`); cloud Monitoring API v4 is a rate-limited backup (`ENPHASE_API_KEY` + OAuth access/refresh + `ENPHASE_SYSTEM_ID`). Default cloud min interval is 15 minutes (`ENPHASE_CLOUD_MIN_INTERVAL_SEC=900`) so the free Watt plan (~1000 hits/mo) lasts.  
+**SolarEdge:** monitoring portal → Site Access → API Access.
 
 ## Deploy (prd-apps)
 

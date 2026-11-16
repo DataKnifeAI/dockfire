@@ -17,7 +17,7 @@
       "site": "home",
       "label": "Solar",
       "icon": "solar",
-      "href": "#view-home",
+      "href": "#view-energy",
       "services": ["Enphase Envoy"],
       "enrich": "solar"
     },
@@ -26,7 +26,7 @@
       "site": "home",
       "label": "Power",
       "icon": "battery",
-      "href": "#view-home",
+      "href": "#view-energy",
       "services": ["Tesla Energy", "PDU"],
       "enrich": "tesla"
     },

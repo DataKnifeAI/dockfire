@@ -23,7 +23,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=23" />
+  <link rel="stylesheet" href="styles.css?v=26" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -39,8 +39,8 @@
     <div class="top-meta">
       <nav class="tabs" aria-label="Views" role="tablist">
         <button type="button" class="tab active" role="tab" aria-selected="true" data-nav="home">Home</button>
+        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="energy">Energy</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-nav="ranch">Ranch</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" data-nav="favorites">Favorites</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-nav="automation">Automation</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-nav="infra">Infra</button>
         <button type="button" class="tab" role="tab" aria-selected="false" data-nav="guide">Guide</button>
@@ -60,7 +60,7 @@
         <div class="home-hero-copy">
           <p class="hero-kicker">DataKnifeAI</p>
           <h1 class="hero-title">DockFire</h1>
-          <p class="hero-sub" id="hero-welcome">A simple view of the house — power, internet, and everyday services.</p>
+          <p class="hero-sub" id="hero-welcome">A simple view of the house — health, production, battery, and internet.</p>
           <p class="home-pulse-line" id="pulse-summary">checking…</p>
         </div>
         <div class="home-scene-wrap" aria-label="Home energy scene">
@@ -234,16 +234,26 @@
       </div>
 
       <div class="home-basics" aria-label="Basic home health">
-        <article class="mode-card" id="mode-power">
-          <p class="mode-kicker">Power</p>
-          <p class="mode-value" id="mode-power-value">—</p>
-          <p class="mode-detail" id="mode-power-detail">Grid or battery</p>
-        </article>
-        <article class="mode-card" id="mode-isp">
+        <a class="mode-card" id="mode-health" href="#view-home" data-status="unknown">
+          <p class="mode-kicker">Health</p>
+          <p class="mode-value" id="mode-health-value">—</p>
+          <p class="mode-detail" id="mode-health-detail">House areas</p>
+        </a>
+        <a class="mode-card" id="mode-production" href="#view-energy" data-status="unknown">
+          <p class="mode-kicker">Production</p>
+          <p class="mode-value" id="mode-production-value">—</p>
+          <p class="mode-detail" id="mode-production-detail">Solar right now</p>
+        </a>
+        <a class="mode-card" id="mode-battery" href="#view-energy" data-status="unknown">
+          <p class="mode-kicker">Battery</p>
+          <p class="mode-value" id="mode-battery-value">—</p>
+          <p class="mode-detail" id="mode-battery-detail">State of charge</p>
+        </a>
+        <a class="mode-card" id="mode-isp" href="#view-home" data-status="unknown">
           <p class="mode-kicker">Internet</p>
           <p class="mode-value" id="mode-isp-value">—</p>
           <p class="mode-detail" id="mode-isp-detail">Fiber or backup</p>
-        </article>
+        </a>
         <article class="chart-card chart-history">
           <h2 class="chart-title">Today’s state</h2>
           <div id="history-chart" class="history-chart" role="img" aria-label="Power and internet over time"></div>
@@ -258,9 +268,10 @@
       <section class="home-services" aria-labelledby="home-services-title">
         <div class="section-head compact">
           <h2 id="home-services-title">Services</h2>
-          <p>Everyday links — movies, games, and more.</p>
+          <p>Tap a chip for connect details. Admin tools live under Infra.</p>
         </div>
         <div id="home-services-grid" class="services-strip" role="list"></div>
+        <div id="home-service-detail" class="service-detail" hidden></div>
       </section>
 
       <section class="weather-hazards" aria-labelledby="weather-title">
@@ -299,8 +310,6 @@
         <div id="providers-grid" class="providers-grid" role="list"></div>
       </section>
 
-      <div class="pulse-board home-areas" id="pulse-board" role="list" aria-label="House areas"></div>
-
       <div class="pulse-issues" id="pulse-issues" hidden>
         <table>
           <caption>Needs attention</caption>
@@ -310,6 +319,33 @@
           <tbody id="pulse-issues-body"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ENERGY: detailed solar + battery systems -->
+    <section id="view-energy" class="view" role="tabpanel" data-view="energy" aria-label="Energy systems" hidden>
+      <div class="section-head">
+        <h2>Energy</h2>
+        <p>Solar arrays, Powerwall, and how DockFire is reading them (local first, cloud backup).</p>
+      </div>
+      <div class="energy-summary" id="energy-summary" aria-label="Energy snapshot">
+        <article class="mode-card" id="energy-sum-production" data-status="unknown">
+          <p class="mode-kicker">Production</p>
+          <p class="mode-value" id="energy-sum-production-value">—</p>
+          <p class="mode-detail" id="energy-sum-production-detail">All arrays</p>
+        </article>
+        <article class="mode-card" id="energy-sum-battery" data-status="unknown">
+          <p class="mode-kicker">Battery</p>
+          <p class="mode-value" id="energy-sum-battery-value">—</p>
+          <p class="mode-detail" id="energy-sum-battery-detail">State of charge</p>
+        </article>
+        <article class="mode-card" id="energy-sum-grid" data-status="unknown">
+          <p class="mode-kicker">House power</p>
+          <p class="mode-value" id="energy-sum-grid-value">—</p>
+          <p class="mode-detail" id="energy-sum-grid-detail">Grid or battery</p>
+        </article>
+      </div>
+      <div id="energy-systems" class="energy-systems" role="list"></div>
+      <p id="energy-note" class="energy-note"></p>
     </section>
 
     <!-- RANCH: remote site high-level -->
@@ -421,22 +457,6 @@
           <tbody id="ranch-pulse-issues-body"></tbody>
         </table>
       </div>
-    </section>
-
-    <!-- FAVORITES -->
-    <section id="view-favorites" class="view" role="tabpanel" data-view="favorites" aria-label="Favorite services" hidden>
-      <div class="section-head">
-        <h2>Favorites</h2>
-        <p>Media, shares, games, and everyday launches.</p>
-      </div>
-      <div class="toolbar" aria-label="Find favorites">
-        <label class="search-wrap" for="search">
-          <span class="search-label">Search</span>
-          <input id="search" type="search" placeholder="Name, category, or what you need…" autocomplete="off" />
-        </label>
-        <div id="audience-filters" class="audience-filters" role="group" aria-label="Who is this for"></div>
-      </div>
-      <div id="favorites-grid" class="launch-grid" role="list"></div>
     </section>
 
     <!-- AUTOMATION -->
@@ -577,6 +597,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=23" defer></script>
+  <script src="app.js?v=26" defer></script>
 </body>
 </html>
