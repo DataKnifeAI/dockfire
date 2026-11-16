@@ -218,6 +218,14 @@
             "Server Manager → Add Server → host + port 7777",
             "Operator docs: DataKnifeAI/satisfactory-server-k8s"
           ]
+        },
+        {
+          "name": "Dragonwilds",
+          "summary": "Join dragonwilds.dataknife.net:7777 (UDP). Admin UI at https://dragonwilds.dataknife.net/.",
+          "used_for": [
+            "Players: Direct Connect to host:port (world password if required)",
+            "Operators: Server Manager basic auth + DataKnifeAI/dragonwilds-operator"
+          ]
         }
       ]
     },

@@ -378,6 +378,20 @@
           "favicon": "assets/icons/steam-favicon.png",
           "vendor": "assets/icons/steam-vendor.svg",
           "statusName": "Satisfactory"
+        },
+        {
+          "name": "Dragonwilds",
+          "blurb": "RuneScape: Dragonwilds dedicated world (Ashenfall).",
+          "help": "In-game: Direct Connect to host:port. World password may be empty when the server allows it \u2014 ask an admin if join fails.",
+          "join": "dragonwilds.dataknife.net:7777 (UDP)",
+          "adminDetail": "https://dragonwilds.dataknife.net/ \u2014 basic auth (operators only). Operator: github.com/DataKnifeAI/dragonwilds-operator",
+          "url": "https://dragonwilds.dataknife.net/",
+          "linkLabel": "Open admin",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/dragonwilds-favicon.png",
+          "vendor": "assets/icons/dragonwilds-vendor.svg",
+          "statusName": "Dragonwilds"
         }
       ]
     },

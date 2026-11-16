@@ -190,6 +190,15 @@
       "check": { "host": "satisfactory.dataknife.net", "port": 7777 }
     },
     {
+      "name": "Dragonwilds",
+      "kind": "gameserver",
+      "description": "RuneScape: Dragonwilds dedicated server admin UI.",
+      "admin": "https://dragonwilds.dataknife.net/",
+      "favicon": "assets/icons/dragonwilds-favicon.png",
+      "vendor": "assets/icons/dragonwilds-vendor.svg",
+      "check": { "host": "dragonwilds.dataknife.net", "port": 443 }
+    },
+    {
       "name": "iDRAC 01",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",
