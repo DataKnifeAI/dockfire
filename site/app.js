@@ -1,4 +1,4 @@
-const ICON_VER = "26";
+const ICON_VER = "27";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -89,6 +89,21 @@ const els = {
   quakeList: document.getElementById("quake-list"),
   weatherLead: document.getElementById("weather-lead"),
   hazardsGrid: document.getElementById("hazards-grid"),
+  homeRanchWeatherCard: document.getElementById("ranch-weather-card"),
+  homeRanchWeatherTemp: document.getElementById("home-ranch-weather-temp"),
+  homeRanchWeatherDetail: document.getElementById("home-ranch-weather-detail"),
+  homeRanchWeatherMeta: document.getElementById("home-ranch-weather-meta"),
+  ranchWxTemp: document.getElementById("ranch-wx-temp"),
+  ranchWxTempValue: document.getElementById("ranch-wx-temp-value"),
+  ranchWxTempDetail: document.getElementById("ranch-wx-temp-detail"),
+  ranchWxHumidity: document.getElementById("ranch-wx-humidity"),
+  ranchWxHumidityValue: document.getElementById("ranch-wx-humidity-value"),
+  ranchWxHumidityDetail: document.getElementById("ranch-wx-humidity-detail"),
+  ranchWxWind: document.getElementById("ranch-wx-wind"),
+  ranchWxWindValue: document.getElementById("ranch-wx-wind-value"),
+  ranchWxWindDetail: document.getElementById("ranch-wx-wind-detail"),
+  ranchWeatherStats: document.getElementById("ranch-weather-stats"),
+  ranchWeatherNote: document.getElementById("ranch-weather-note"),
 };
 
 let deferredInstall = null;
@@ -138,6 +153,75 @@ function setOfflineBanner(on) {
   if (els.offlineBanner) els.offlineBanner.hidden = !on;
 }
 
+function renderRanchWeather(home) {
+  const wx = home?.ranch_weather || {};
+  const ok = !!wx.ok;
+  const status = ok ? "ok" : wx.note ? "warn" : "unknown";
+  const unit = wx.unit || "F";
+  const tempText = wx.temp != null ? `${wx.temp}°${unit}` : "—";
+  const humidity = wx.humidity || "—";
+  const windBits = [wx.wind, wx.gust ? `gust ${wx.gust}` : null, wx.wind_dir].filter(Boolean);
+  const windText = windBits.length ? windBits[0] : "—";
+  const windDetail = [wx.gust ? `Gust ${wx.gust}` : null, wx.wind_dir].filter(Boolean).join(" · ") || "Gust / dir";
+
+  if (els.homeRanchWeatherCard) els.homeRanchWeatherCard.dataset.status = status;
+  if (els.homeRanchWeatherTemp) els.homeRanchWeatherTemp.textContent = tempText;
+  if (els.homeRanchWeatherDetail) {
+    const bits = [];
+    if (wx.humidity) bits.push(`${wx.humidity} RH`);
+    if (wx.wind) bits.push(`Wind ${wx.wind}`);
+    els.homeRanchWeatherDetail.textContent = bits.join(" · ") || wx.note || "Ambient Weather over SD-WAN";
+  }
+  if (els.homeRanchWeatherMeta) {
+    const bits = [];
+    if (wx.rain_day) bits.push(`Rain ${wx.rain_day}`);
+    if (wx.provider) bits.push(wx.provider);
+    els.homeRanchWeatherMeta.textContent = bits.join(" · ");
+  }
+
+  if (els.ranchWxTemp) els.ranchWxTemp.dataset.status = status;
+  if (els.ranchWxTempValue) els.ranchWxTempValue.textContent = tempText;
+  if (els.ranchWxTempDetail) {
+    els.ranchWxTempDetail.textContent = wx.dew_point ? `Dew ${wx.dew_point}` : wx.provider || "Station";
+  }
+  if (els.ranchWxHumidity) els.ranchWxHumidity.dataset.status = status;
+  if (els.ranchWxHumidityValue) els.ranchWxHumidityValue.textContent = humidity;
+  if (els.ranchWxHumidityDetail) {
+    els.ranchWxHumidityDetail.textContent = wx.rain_rate ? `Rate ${wx.rain_rate}` : "Outdoor";
+  }
+  if (els.ranchWxWind) els.ranchWxWind.dataset.status = status;
+  if (els.ranchWxWindValue) els.ranchWxWindValue.textContent = windText;
+  if (els.ranchWxWindDetail) els.ranchWxWindDetail.textContent = windDetail;
+
+  if (els.ranchWeatherStats) {
+    els.ranchWeatherStats.replaceChildren();
+    const stats = wx.stats || [];
+    if (!stats.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-hint";
+      empty.textContent = ok ? "No station fields yet." : "Ranch weather station unreachable.";
+      els.ranchWeatherStats.appendChild(empty);
+    } else {
+      const dl = document.createElement("dl");
+      dl.className = "energy-system-stats";
+      for (const row of stats) {
+        const dt = document.createElement("dt");
+        dt.textContent = row.label || "";
+        const dd = document.createElement("dd");
+        dd.textContent = row.value ?? "—";
+        dl.append(dt, dd);
+      }
+      els.ranchWeatherStats.appendChild(dl);
+    }
+  }
+
+  if (els.ranchWeatherNote) {
+    const note = wx.note || "";
+    els.ranchWeatherNote.textContent = note;
+    els.ranchWeatherNote.hidden = !note;
+  }
+}
+
 function renderWeather(home) {
   const weather = home?.weather;
   if (els.weatherTemp) {
@@ -178,6 +262,7 @@ function renderWeather(home) {
       }
     }
   }
+  renderRanchWeather(home);
 }
 
 function renderHazards(data) {
@@ -1106,7 +1191,7 @@ function renderRanchPulse(home) {
   if (els.ranchWelcome) {
     els.ranchWelcome.textContent =
       bundle.blurb ||
-      "The ranch link from home. Right now only the ranch gateway answers from here.";
+      "Ranch over SD-WAN — gateway, Protect, and Ambient Weather station.";
   }
   if (els.ranchPulseSummary) {
     els.ranchPulseSummary.textContent = domains.length
@@ -1120,6 +1205,7 @@ function renderRanchPulse(home) {
     const gw = domains.find((d) => d.id === "ranch-gateway");
     els.ranchEmptyHint.hidden = !(gw && gw.status === "ok");
   }
+  renderRanchWeather(home);
 }
 
 function renderProviders(home, siteId = "home") {

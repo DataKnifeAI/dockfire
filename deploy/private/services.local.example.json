@@ -26,6 +26,14 @@
       "favicon": "assets/icons/ubiquiti-favicon.png",
       "vendor": "assets/icons/ubiquiti-vendor.svg",
       "check": { "host": "REPLACE_RANCH_GATEWAY", "port": 443 }
+    },
+    {
+      "name": "Ambient Weather",
+      "kind": "remote",
+      "description": "Ranch Ambient Weather Network console (livedata over SD-WAN).",
+      "admin": "http://REPLACE_AMBIENT_HOST/",
+      "favicon": "assets/icons/internet-favicon.png",
+      "check": { "host": "REPLACE_AMBIENT_HOST", "port": 80 }
     }
   ]
 }

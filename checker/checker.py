@@ -1086,19 +1086,169 @@ def push_mode_history(modes: dict) -> list[dict]:
     return list(_MODE_HISTORY)
 
 
+# Ambient Weather / Ecowitt-style live IDs from WeatherHub /get_livedata_info
+_AMBIENT_IDS = {
+    "0x02": "Outdoor",
+    "0x03": "Dew point",
+    "0x07": "Humidity",
+    "0x0A": "Wind dir",
+    "0x0B": "Wind",
+    "0x0C": "Gust",
+    "0x15": "Solar",
+    "0x17": "UV",
+    "0x19": "Gust max",
+    "0x0D": "Rain event",
+    "0x0E": "Rain rate",
+    "0x10": "Rain day",
+    "0x11": "Rain week",
+    "0x12": "Rain month",
+    "0x13": "Rain year",
+}
+
+
+def fetch_ranch_weather() -> dict:
+    """Live Ambient Weather Network console on the ranch LAN (no login needed for livedata)."""
+    host = _env("AMBIENT_WEATHER_HOST", "http://192.168.31.241").rstrip("/")
+    code, body, ms = http_get(
+        f"{host}/get_livedata_info",
+        timeout=max(HTTP_TIMEOUT, 5.0),
+        headers={"Accept": "application/json"},
+    )
+    if code != 200 or not body:
+        return {
+            "ok": False,
+            "note": f"Ranch weather station HTTP {code}",
+            "latency_ms": round(ms, 1),
+            "href": host + "/",
+        }
+    try:
+        data = json.loads(body.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {
+            "ok": False,
+            "note": "Ranch weather station unreadable",
+            "latency_ms": round(ms, 1),
+            "href": host + "/",
+        }
+
+    by_id: dict[str, dict] = {}
+    for item in (data.get("common_list") or []) + (data.get("rain") or []):
+        if isinstance(item, dict) and item.get("id") is not None:
+            by_id[str(item["id"])] = item
+
+    def _val(iid: str) -> str | None:
+        item = by_id.get(iid)
+        if not item:
+            return None
+        raw = str(item.get("val") or "").strip()
+        unit = str(item.get("unit") or "").strip()
+        if not raw:
+            return None
+        if unit and not raw.endswith(unit) and unit not in raw:
+            return f"{raw} {unit}".strip()
+        return raw
+
+    outdoor = _val("0x02")
+    humidity = _val("0x07")
+    wind = _val("0x0B")
+    gust = _val("0x0C")
+    wind_dir_raw = _val("0x0A")
+    rain_day = _val("0x10")
+    rain_rate = _val("0x0E")
+    dew = _val("0x03")
+    solar = _val("0x15")
+    uv = _val("0x17")
+
+    wind_dir = wind_dir_raw
+    if wind_dir_raw:
+        try:
+            deg = float(re.sub(r"[^0-9.\-]", "", wind_dir_raw.split()[0]))
+            compass = (
+                "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+            )[int((deg + 11.25) // 22.5) % 16]
+            wind_dir = f"{compass} ({int(round(deg))}°)"
+        except (ValueError, IndexError):
+            wind_dir = wind_dir_raw
+
+    stats = []
+    for iid, label in (
+        ("0x02", "Outdoor"),
+        ("0x07", "Humidity"),
+        ("0x0B", "Wind"),
+        ("0x0C", "Gust"),
+        ("0x0A", "Wind dir"),
+        ("0x03", "Dew point"),
+        ("0x10", "Rain today"),
+        ("0x0E", "Rain rate"),
+        ("0x15", "Solar"),
+        ("0x17", "UV"),
+        ("0x12", "Rain month"),
+        ("0x13", "Rain year"),
+    ):
+        if iid == "0x0A":
+            v = wind_dir
+        else:
+            v = _val(iid)
+        if v is not None:
+            stats.append({"label": label, "value": v, "id": iid})
+
+    # Device meta (optional)
+    ver_code, ver_body, _ = http_get(f"{host}/get_version", timeout=max(HTTP_TIMEOUT, 4.0))
+    version = None
+    if ver_code == 200 and ver_body:
+        try:
+            version = (json.loads(ver_body.decode()) or {}).get("version")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            version = None
+
+    temp_f = None
+    if outdoor:
+        try:
+            temp_f = float(re.sub(r"[^0-9.\-]", "", outdoor.split()[0]))
+        except (ValueError, IndexError):
+            temp_f = None
+
+    return {
+        "ok": True,
+        "source": "ambient",
+        "label": "Ranch station",
+        "provider": "Ambient Weather Network",
+        "version": version,
+        "temp": temp_f,
+        "unit": "F",
+        "humidity": humidity,
+        "wind": wind,
+        "gust": gust,
+        "wind_dir": wind_dir,
+        "dew_point": dew,
+        "rain_day": rain_day,
+        "rain_rate": rain_rate,
+        "solar": solar,
+        "uv": uv,
+        "stats": stats,
+        "note": "Live from ranch Ambient Weather console over SD-WAN",
+        "latency_ms": round(ms, 1),
+        "href": host + "/",
+    }
+
+
 def enrich_ranch(svc_map: dict[str, dict]) -> dict:
     gw = svc_map.get("Ranch Gateway") or {}
     ms = gw.get("latency_ms")
     stats = []
     if gw.get("status") == "ok":
         stats.append({"label": "Gateway", "value": "online"})
-        note = "Ranch gateway answers · no other ranch devices seen from here"
+        note = "Ranch gateway answers · Protect + Ambient Weather on LAN"
     elif gw.get("status") == "bad":
         stats.append({"label": "Gateway", "value": "offline"})
         note = "Cannot reach the ranch gateway — VPN may be down"
     else:
         stats.append({"label": "Gateway", "value": "—"})
         note = "Ranch probe not configured"
+    aw = svc_map.get("Ambient Weather") or {}
+    if aw.get("status") == "ok":
+        stats.append({"label": "Weather", "value": "online"})
     return {"stats": stats, "note": note, "latency_ms": ms}
 
 
@@ -1295,6 +1445,7 @@ def build_home(status_payload: dict | None = None) -> dict:
         }
 
     weather_bundle = fetch_weather_bundle()
+    ranch_weather = fetch_ranch_weather()
 
     return {
         "as_of": payload.get("as_of", time.time()),
@@ -1307,6 +1458,7 @@ def build_home(status_payload: dict | None = None) -> dict:
         "history": history,
         "energy": energy,
         "weather": weather_bundle.get("weather"),
+        "ranch_weather": ranch_weather,
         "quakes": weather_bundle.get("quakes") or [],
         "weather_note": weather_bundle.get("note") or "",
         "energy_note": energy.get("note")

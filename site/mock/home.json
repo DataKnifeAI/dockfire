@@ -141,7 +141,7 @@
     {
       "id": "ranch",
       "label": "Ranch",
-      "blurb": "Ranch link from home. Only the ranch gateway is visible from here right now.",
+      "blurb": "Ranch over SD-WAN — gateway, Protect, and Ambient Weather station.",
       "summary": {
         "ok": 2,
         "warn": 0,
@@ -162,7 +162,7 @@
               "value": "online"
             }
           ],
-          "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+          "note": "Ranch gateway answers \u00b7 Protect + Ambient Weather on LAN",
           "latency_ms": null
         },
         {
@@ -323,7 +323,7 @@
           "value": "online"
         }
       ],
-      "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+      "note": "Ranch gateway answers \u00b7 Protect + Ambient Weather on LAN",
       "latency_ms": null
     },
     {
@@ -498,7 +498,7 @@
     "ranch": {
       "id": "ranch",
       "label": "Ranch",
-      "blurb": "Ranch link from home. Only the ranch gateway is visible from here right now.",
+      "blurb": "Ranch over SD-WAN — gateway, Protect, and Ambient Weather station.",
       "summary": {
         "ok": 2,
         "warn": 0,
@@ -519,7 +519,7 @@
               "value": "online"
             }
           ],
-          "note": "Ranch gateway answers \u00b7 no other ranch devices seen from here",
+          "note": "Ranch gateway answers \u00b7 Protect + Ambient Weather on LAN",
           "latency_ms": null
         },
         {
@@ -605,6 +605,41 @@
     "wind": "8 mph",
     "forecast": "Partly sunny",
     "detail": "Partly sunny. High near 68. West wind around 8 mph."
+  },
+  "ranch_weather": {
+    "ok": true,
+    "source": "ambient",
+    "label": "Ranch station",
+    "provider": "Ambient Weather Network",
+    "version": "4.3.3",
+    "temp": 48,
+    "unit": "F",
+    "humidity": "95%",
+    "wind": "3 mph",
+    "gust": "5 mph",
+    "wind_dir": "ESE (118\u00b0)",
+    "dew_point": "47.3 F",
+    "rain_day": "0.17 in",
+    "rain_rate": "0.07 in/Hr",
+    "solar": "0.00 W/m2",
+    "uv": "0",
+    "stats": [
+      { "label": "Outdoor", "value": "48.6 F", "id": "0x02" },
+      { "label": "Humidity", "value": "95%", "id": "0x07" },
+      { "label": "Wind", "value": "0.89 mph", "id": "0x0B" },
+      { "label": "Gust", "value": "1.12 mph", "id": "0x0C" },
+      { "label": "Wind dir", "value": "ESE (118\u00b0)", "id": "0x0A" },
+      { "label": "Dew point", "value": "47.3 F", "id": "0x03" },
+      { "label": "Rain today", "value": "0.17 in", "id": "0x10" },
+      { "label": "Rain rate", "value": "0.07 in/Hr", "id": "0x0E" },
+      { "label": "Solar", "value": "0.00 W/m2", "id": "0x15" },
+      { "label": "UV", "value": "0", "id": "0x17" },
+      { "label": "Rain month", "value": "1.44 in", "id": "0x12" },
+      { "label": "Rain year", "value": "3.68 in", "id": "0x13" }
+    ],
+    "note": "Live from ranch Ambient Weather console over SD-WAN",
+    "latency_ms": 42.0,
+    "href": "http://192.168.31.241/"
   },
   "quakes": [],
   "weather_note": "",

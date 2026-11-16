@@ -1,10 +1,10 @@
 /* DockFire service worker — cache shell + mock so the hub still opens if the cluster is down. */
-const CACHE = "dockfire-v26";
+const CACHE = "dockfire-v27";
 const PRECACHE = [
   "./",
   "./index.html",
-  "./styles.css?v=26",
-  "./app.js?v=26",
+  "./styles.css?v=27",
+  "./app.js?v=27",
   "./manifest.webmanifest",
   "./catalog.json",
   "./providers.json",

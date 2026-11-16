@@ -23,7 +23,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=26" />
+  <link rel="stylesheet" href="styles.css?v=27" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -281,10 +281,16 @@
         </div>
         <div class="weather-live" id="weather-live">
           <article class="weather-card" id="weather-card">
-            <p class="mode-kicker">Now</p>
+            <p class="mode-kicker">Forecast</p>
             <p class="weather-temp" id="weather-temp">—</p>
             <p class="weather-forecast" id="weather-forecast">Loading forecast…</p>
             <p class="weather-meta" id="weather-meta"></p>
+          </article>
+          <article class="weather-card" id="ranch-weather-card" data-status="unknown">
+            <p class="mode-kicker">Ranch station</p>
+            <p class="weather-temp" id="home-ranch-weather-temp">—</p>
+            <p class="weather-forecast" id="home-ranch-weather-detail">Ambient Weather over SD-WAN</p>
+            <p class="weather-meta" id="home-ranch-weather-meta"></p>
           </article>
           <article class="weather-card" id="quakes-card">
             <p class="mode-kicker">Nearby quakes</p>
@@ -354,7 +360,7 @@
         <div class="home-hero-copy">
           <p class="hero-kicker">Remote site</p>
           <h1 class="hero-title">Ranch</h1>
-          <p class="hero-sub" id="ranch-welcome">The ranch link from home. Right now only the ranch gateway answers from here.</p>
+          <p class="hero-sub" id="ranch-welcome">Ranch over SD-WAN — gateway, Protect, and Ambient Weather station.</p>
           <p class="home-pulse-line" id="ranch-pulse-summary">checking…</p>
         </div>
         <div class="home-scene-wrap" aria-label="Ranch scene">
@@ -444,9 +450,35 @@
         <article class="chart-card chart-card-wide">
           <h2 class="chart-title">Ranch status</h2>
           <div class="pulse-board" id="ranch-pulse-board" role="list"></div>
-          <p class="ranch-empty-hint" id="ranch-empty-hint">From this network we can reach the ranch gateway (UniFi OS). No other ranch devices answered a scan.</p>
+          <p class="ranch-empty-hint" id="ranch-empty-hint">From this network we can reach the ranch gateway (UniFi OS). Protect and Ambient Weather are on the ranch LAN.</p>
         </article>
       </div>
+
+      <section class="ranch-weather" aria-labelledby="ranch-weather-title">
+        <div class="section-head compact">
+          <h2 id="ranch-weather-title">Ranch weather</h2>
+          <p>Live Ambient Weather Network station on the ranch — separate from the NWS forecast on Home.</p>
+        </div>
+        <div class="energy-summary" id="ranch-weather-summary" aria-label="Ranch weather snapshot">
+          <article class="mode-card" id="ranch-wx-temp" data-status="unknown">
+            <p class="mode-kicker">Outdoor</p>
+            <p class="mode-value" id="ranch-wx-temp-value">—</p>
+            <p class="mode-detail" id="ranch-wx-temp-detail">Station</p>
+          </article>
+          <article class="mode-card" id="ranch-wx-humidity" data-status="unknown">
+            <p class="mode-kicker">Humidity</p>
+            <p class="mode-value" id="ranch-wx-humidity-value">—</p>
+            <p class="mode-detail" id="ranch-wx-humidity-detail">Outdoor</p>
+          </article>
+          <article class="mode-card" id="ranch-wx-wind" data-status="unknown">
+            <p class="mode-kicker">Wind</p>
+            <p class="mode-value" id="ranch-wx-wind-value">—</p>
+            <p class="mode-detail" id="ranch-wx-wind-detail">Gust / dir</p>
+          </article>
+        </div>
+        <div id="ranch-weather-stats" class="ranch-weather-stats"></div>
+        <p id="ranch-weather-note" class="energy-note"></p>
+      </section>
 
       <div class="pulse-issues" id="ranch-pulse-issues" hidden>
         <table>
@@ -597,6 +629,6 @@
     </article>
   </template>
 
-  <script src="app.js?v=26" defer></script>
+  <script src="app.js?v=27" defer></script>
 </body>
 </html>
