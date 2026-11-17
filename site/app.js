@@ -1,4 +1,4 @@
-const ICON_VER = "30";
+const ICON_VER = "31";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -6,19 +6,14 @@ const VIEW_KEY = "dockfire-view";
 const HISTORY_KEY = "dockfire-mode-history";
 const VIEWS = ["home", "energy", "ranch", "automation", "infra", "guide"];
 
-const HOME_SERVICE_NAMES = [
-  "Plex (app)",
-  "Movies",
-  "Shows",
-  "Photos",
-  "Anime",
-  "Stoat",
-  "Palworld",
-  "Windrose",
-  "Satisfactory",
-  "Dragonwilds",
-  "Brother printer",
+const HOME_SERVICE_GROUPS = [
+  { id: "media", label: "Media", names: ["Plex (app)"] },
+  { id: "shares", label: "Shares", names: ["Movies", "Shows", "Photos", "Anime"] },
+  { id: "games", label: "Games", names: ["Palworld", "Windrose", "Satisfactory", "Dragonwilds"] },
+  { id: "comms", label: "Comms", names: ["Stoat"] },
+  { id: "print", label: "Print", names: ["Brother printer"] },
 ];
+const HOME_SERVICE_NAMES = HOME_SERVICE_GROUPS.flatMap((g) => g.names);
 const HOME_CONNECT_CATEGORIES = new Set(["Shares", "Game server", "Print", "Chat"]);
 const AUTOMATION_NAMES = new Set([
   "Lutron",
@@ -902,6 +897,44 @@ function showHomeServiceDetail(item) {
   if (actions.childNodes.length) panel.appendChild(actions);
 }
 
+function makeHomeServiceChip(item) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "service-chip";
+  btn.setAttribute("role", "listitem");
+  btn.setAttribute("aria-expanded", "false");
+  const status = item.statusName ? statusByName.get(item.statusName) : null;
+  const dot = document.createElement("span");
+  dot.className = `pulse-card-dot is-${status?.status || "external"}`;
+  const img = document.createElement("img");
+  img.alt = "";
+  img.width = 22;
+  img.height = 22;
+  setIcon(img, item.favicon || item.vendor, "");
+  const name = document.createElement("span");
+  name.className = "service-chip-name";
+  name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
+  btn.append(dot, img, name);
+  btn.addEventListener("click", () => {
+    const wasActive = btn.classList.contains("is-active");
+    els.homeServicesGrid.querySelectorAll(".service-chip.is-active").forEach((el) => {
+      el.classList.remove("is-active");
+      el.setAttribute("aria-expanded", "false");
+    });
+    if (wasActive) {
+      if (els.homeServiceDetail) {
+        els.homeServiceDetail.hidden = true;
+        els.homeServiceDetail.replaceChildren();
+      }
+      return;
+    }
+    btn.classList.add("is-active");
+    btn.setAttribute("aria-expanded", "true");
+    showHomeServiceDetail(item);
+  });
+  return btn;
+}
+
 function renderHomeServices() {
   if (!els.homeServicesGrid) return;
   els.homeServicesGrid.replaceChildren();
@@ -909,50 +942,31 @@ function renderHomeServices() {
     els.homeServiceDetail.hidden = true;
     els.homeServiceDetail.replaceChildren();
   }
-  const items = collectHomeServices();
-  if (!items.length) {
+  const byName = new Map(collectHomeServices().map((item) => [item.name, item]));
+  let shown = 0;
+  for (const group of HOME_SERVICE_GROUPS) {
+    const items = group.names.map((n) => byName.get(n)).filter(Boolean);
+    if (!items.length) continue;
+    shown += items.length;
+    const section = document.createElement("div");
+    section.className = "services-group";
+    section.dataset.group = group.id;
+    const label = document.createElement("p");
+    label.className = "services-group-label";
+    label.textContent = group.label;
+    const strip = document.createElement("div");
+    strip.className = "services-strip";
+    strip.setAttribute("role", "list");
+    strip.setAttribute("aria-label", group.label);
+    for (const item of items) strip.appendChild(makeHomeServiceChip(item));
+    section.append(label, strip);
+    els.homeServicesGrid.appendChild(section);
+  }
+  if (!shown) {
     const empty = document.createElement("p");
     empty.className = "empty-hint";
     empty.textContent = "Services load with the catalog.";
     els.homeServicesGrid.appendChild(empty);
-    return;
-  }
-  for (const item of items) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "service-chip";
-    btn.setAttribute("role", "listitem");
-    btn.setAttribute("aria-expanded", "false");
-    const status = item.statusName ? statusByName.get(item.statusName) : null;
-    const dot = document.createElement("span");
-    dot.className = `pulse-card-dot is-${status?.status || "external"}`;
-    const img = document.createElement("img");
-    img.alt = "";
-    img.width = 22;
-    img.height = 22;
-    setIcon(img, item.favicon || item.vendor, "");
-    const name = document.createElement("span");
-    name.className = "service-chip-name";
-    name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
-    btn.append(dot, img, name);
-    btn.addEventListener("click", () => {
-      const wasActive = btn.classList.contains("is-active");
-      els.homeServicesGrid.querySelectorAll(".service-chip.is-active").forEach((el) => {
-        el.classList.remove("is-active");
-        el.setAttribute("aria-expanded", "false");
-      });
-      if (wasActive) {
-        if (els.homeServiceDetail) {
-          els.homeServiceDetail.hidden = true;
-          els.homeServiceDetail.replaceChildren();
-        }
-        return;
-      }
-      btn.classList.add("is-active");
-      btn.setAttribute("aria-expanded", "true");
-      showHomeServiceDetail(item);
-    });
-    els.homeServicesGrid.appendChild(btn);
   }
 }
 
