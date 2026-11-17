@@ -241,6 +241,15 @@
             "Players: Direct Connect with VIP IP:port (not the hostname; world password if required)",
             "Operators: Server Manager basic auth + DataKnifeAI/dragonwilds-operator"
           ]
+        },
+        {
+          "name": "Minecraft",
+          "summary": "Join minecraft.dataknife.net:19132 (Bedrock Edition only — TCP+UDP). World: survival-1.",
+          "used_for": [
+            "Players: Bedrock client → Play → Servers → Add Server (host minecraft.dataknife.net, port 19132). LAN browse will not see it through K8s.",
+            "Windows / console / mobile: official Bedrock client. Linux: mcpelauncher — see DataKnifeAI/bedrock-operator docs/CLIENT.md",
+            "Java / Prism cannot join without Geyser. Whitelist is off. Operator: DataKnifeAI/bedrock-operator"
+          ]
         }
       ]
     },

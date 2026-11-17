@@ -208,6 +208,15 @@
       "check": { "host": "dragonwilds.dataknife.net", "port": 443 }
     },
     {
+      "name": "Minecraft",
+      "kind": "gameserver",
+      "description": "Minecraft Bedrock dedicated server (survival-1).",
+      "admin": "https://github.com/DataKnifeAI/bedrock-operator",
+      "favicon": "assets/icons/minecraft-favicon.png",
+      "vendor": "assets/icons/minecraft-vendor.svg",
+      "check": { "host": "minecraft.dataknife.net", "port": 19132 }
+    },
+    {
       "name": "iDRAC 01",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",

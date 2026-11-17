@@ -1,4 +1,4 @@
-const ICON_VER = "31";
+const ICON_VER = "32";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -9,7 +9,7 @@ const VIEWS = ["home", "energy", "ranch", "automation", "infra", "guide"];
 const HOME_SERVICE_GROUPS = [
   { id: "media", label: "Media", names: ["Plex (app)"] },
   { id: "shares", label: "Shares", names: ["Movies", "Shows", "Photos", "Anime"] },
-  { id: "games", label: "Games", names: ["Palworld", "Windrose", "Satisfactory", "Dragonwilds"] },
+  { id: "games", label: "Games", names: ["Palworld", "Windrose", "Satisfactory", "Dragonwilds", "Minecraft"] },
   { id: "comms", label: "Comms", names: ["Stoat"] },
   { id: "print", label: "Print", names: ["Brother printer"] },
 ];

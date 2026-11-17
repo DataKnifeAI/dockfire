@@ -406,6 +406,20 @@
           "favicon": "assets/icons/dragonwilds-favicon.png",
           "vendor": "assets/icons/dragonwilds-vendor.svg",
           "statusName": "Dragonwilds"
+        },
+        {
+          "name": "Minecraft",
+          "blurb": "Minecraft Bedrock dedicated world (survival-1).",
+          "help": "Bedrock only (not Java). Play → Servers → Add Server with minecraft.dataknife.net and port 19132. LAN browse will not see it through Kubernetes. Windows / console / mobile: official Bedrock client. Linux: mcpelauncher — see bedrock-operator CLIENT.md. Java / Prism cannot join without Geyser. Whitelist is currently off.",
+          "join": "minecraft.dataknife.net:19132 (Bedrock TCP+UDP)",
+          "adminDetail": "Operator: github.com/DataKnifeAI/bedrock-operator · world survival-1 · VIP 192.168.14.190",
+          "url": "https://github.com/DataKnifeAI/bedrock-operator",
+          "linkLabel": "Operator docs",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/minecraft-favicon.png",
+          "vendor": "assets/icons/minecraft-vendor.svg",
+          "statusName": "Minecraft"
         }
       ]
     },
