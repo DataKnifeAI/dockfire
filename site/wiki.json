@@ -192,6 +192,21 @@
       ]
     },
     {
+      "id": "chat",
+      "title": "Chat",
+      "entries": [
+        {
+          "name": "Stoat",
+          "summary": "Family / lab chat at https://stoat.dataknife.net/ (Stoat v0.16).",
+          "used_for": [
+            "Players: open the URL in a browser, or set a Stoat/Revolt client instance to stoat.dataknife.net",
+            "Voice: LiveKit on the same host (LAN/VPN)",
+            "Operators: DataKnifeAI/stoat-operator \u00b7 namespace stoat"
+          ]
+        }
+      ]
+    },
+    {
       "id": "game-servers",
       "title": "Game servers",
       "entries": [

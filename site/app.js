@@ -1,4 +1,4 @@
-const ICON_VER = "29";
+const ICON_VER = "30";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -12,13 +12,14 @@ const HOME_SERVICE_NAMES = [
   "Shows",
   "Photos",
   "Anime",
+  "Stoat",
   "Palworld",
   "Windrose",
   "Satisfactory",
   "Dragonwilds",
   "Brother printer",
 ];
-const HOME_CONNECT_CATEGORIES = new Set(["Shares", "Game server", "Print"]);
+const HOME_CONNECT_CATEGORIES = new Set(["Shares", "Game server", "Print", "Chat"]);
 const AUTOMATION_NAMES = new Set([
   "Lutron",
   "SmartThings",

@@ -211,6 +211,20 @@
           "statusName": "Pulseblade"
         },
         {
+          "name": "Stoat",
+          "blurb": "Self-hosted Stoat chat for the house and lab (web + desktop clients).",
+          "help": "Open the web app or point a Stoat / Revolt-compatible client at this instance URL. Voice uses LiveKit on the same host. Ask an admin for an invite if registration is locked.",
+          "join": "https://stoat.dataknife.net/",
+          "adminDetail": "Operator: github.com/DataKnifeAI/stoat-operator \u00b7 CR in namespace stoat",
+          "url": "https://stoat.dataknife.net/",
+          "linkLabel": "Open chat",
+          "audience": "everyone",
+          "category": "Chat",
+          "favicon": "assets/icons/stoat-favicon.png",
+          "vendor": "assets/icons/stoat-vendor.svg",
+          "statusName": "Stoat"
+        },
+        {
           "name": "Container registry",
           "blurb": "Harbor \u2014 private images the clusters pull.",
           "help": "Deploy failures that say image pull often start here.",

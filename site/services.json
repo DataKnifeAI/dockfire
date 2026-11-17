@@ -163,6 +163,15 @@
       "check": { "host": "pulseblade.dataknife.net", "port": 443 }
     },
     {
+      "name": "Stoat",
+      "kind": "chat",
+      "description": "Self-hosted Stoat chat (web UI + API).",
+      "admin": "https://stoat.dataknife.net/",
+      "favicon": "assets/icons/stoat-favicon.png",
+      "vendor": "assets/icons/stoat-vendor.svg",
+      "check": { "host": "stoat.dataknife.net", "port": 443 }
+    },
+    {
       "name": "Palworld",
       "kind": "gameserver",
       "description": "Palworld dedicated server admin UI.",
