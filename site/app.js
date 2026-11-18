@@ -1,4 +1,4 @@
-const ICON_VER = "34";
+const ICON_VER = "35";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -907,6 +907,10 @@ function showHomeServiceDetail(item) {
   if (actions.childNodes.length) panel.appendChild(actions);
 }
 
+function homeServiceChipLabel(item) {
+  return item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
+}
+
 function makeHomeServiceChip(item) {
   const btn = document.createElement("button");
   btn.type = "button";
@@ -923,7 +927,7 @@ function makeHomeServiceChip(item) {
   setIcon(img, item.favicon || item.vendor, "");
   const name = document.createElement("span");
   name.className = "service-chip-name";
-  name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
+  name.textContent = homeServiceChipLabel(item);
   btn.append(dot, img, name);
   btn.addEventListener("click", () => {
     if (isBrowserApp(item)) {
@@ -967,8 +971,13 @@ function renderHomeServices() {
   const byName = new Map(collectHomeServices().map((item) => [item.name, item]));
   let shown = 0;
   for (const group of HOME_SERVICE_GROUPS) {
-    const items = group.names.map((n) => byName.get(n)).filter(Boolean);
+    let items = group.names.map((n) => byName.get(n)).filter(Boolean);
     if (!items.length) continue;
+    if (group.id === "shares" || group.id === "games") {
+      items = items.slice().sort((a, b) =>
+        homeServiceChipLabel(a).localeCompare(homeServiceChipLabel(b), undefined, { sensitivity: "base" })
+      );
+    }
     shown += items.length;
     const section = document.createElement("div");
     section.className = "services-group";
