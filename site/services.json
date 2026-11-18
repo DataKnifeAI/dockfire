@@ -192,8 +192,8 @@
     {
       "name": "Satisfactory",
       "kind": "gameserver",
-      "description": "Satisfactory dedicated server join port.",
-      "admin": "https://github.com/DataKnifeAI/satisfactory-server-k8s",
+      "description": "Satisfactory dedicated server (Lee's Satisfactory).",
+      "admin": "https://github.com/DataKnifeAI/satisfactory-operator",
       "favicon": "assets/icons/steam-favicon.png",
       "vendor": "assets/icons/steam-vendor.svg",
       "check": { "host": "satisfactory.dataknife.net", "port": 7777 }

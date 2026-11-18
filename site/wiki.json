@@ -228,10 +228,10 @@
         },
         {
           "name": "Satisfactory",
-          "summary": "Join satisfactory.dataknife.net:7777 (TCP+UDP).",
+          "summary": "Join satisfactory.dataknife.net:7777 (TCP+UDP). Server: Lee's Satisfactory.",
           "used_for": [
-            "Server Manager → Add Server → host + port 7777",
-            "Operator docs: DataKnifeAI/satisfactory-server-k8s"
+            "Players: Server Manager → Add Server → satisfactory.dataknife.net port 7777; claim on first connect, then create/load a session (also needs 8888 TCP)",
+            "Operator: DataKnifeAI/satisfactory-operator · VIP 192.168.14.185"
           ]
         },
         {
