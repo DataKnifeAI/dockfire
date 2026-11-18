@@ -1,4 +1,4 @@
-const ICON_VER = "33";
+const ICON_VER = "34";
 const THEME_KEY = "dockfire-theme";
 const THEME_ORDER = ["system", "dark", "light"];
 const THEME_LABELS = { system: "Theme: System", dark: "Theme: Dark", light: "Theme: Light" };
@@ -423,6 +423,16 @@ function itemMatches(item) {
 
 function isHomeConnectItem(item) {
   return HOME_CONNECT_CATEGORIES.has(item.category) || Boolean(item.connect || item.join);
+}
+
+/** https apps open in a new tab; join/connect services keep the detail panel. */
+function isBrowserApp(item) {
+  const u = item.url || "";
+  if (!/^https?:\/\//i.test(u)) return false;
+  if (item.category === "Game server" || item.category === "Shares" || item.category === "Print") {
+    return false;
+  }
+  return true;
 }
 
 function renderLaunchCard(item, opts = {}) {
@@ -916,6 +926,18 @@ function makeHomeServiceChip(item) {
   name.textContent = item.name.replace(/\s*\(lab\)|\s*\(app\)/gi, "").trim();
   btn.append(dot, img, name);
   btn.addEventListener("click", () => {
+    if (isBrowserApp(item)) {
+      els.homeServicesGrid.querySelectorAll(".service-chip.is-active").forEach((el) => {
+        el.classList.remove("is-active");
+        el.setAttribute("aria-expanded", "false");
+      });
+      if (els.homeServiceDetail) {
+        els.homeServiceDetail.hidden = true;
+        els.homeServiceDetail.replaceChildren();
+      }
+      window.open(item.url, "_blank", "noopener,noreferrer");
+      return;
+    }
     const wasActive = btn.classList.contains("is-active");
     els.homeServicesGrid.querySelectorAll(".service-chip.is-active").forEach((el) => {
       el.classList.remove("is-active");
