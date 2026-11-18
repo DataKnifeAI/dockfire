@@ -250,6 +250,14 @@
             "Windows / console / mobile: official Bedrock client. Linux: mcpelauncher — see DataKnifeAI/bedrock-operator docs/CLIENT.md",
             "Java / Prism cannot join without Geyser. Whitelist is off. Operator: DataKnifeAI/bedrock-operator"
           ]
+        },
+        {
+          "name": "Terraria",
+          "summary": "Join terraria.dataknife.net:7777 (TCP). World: main (TShock).",
+          "used_for": [
+            "Players: Multiplayer → Join via IP → terraria.dataknife.net:7777 (Steam or standalone client; version must match server)",
+            "No join password. Operator: DataKnifeAI/terraria-operator (REST on 7878 is cluster-only)"
+          ]
         }
       ]
     },

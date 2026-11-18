@@ -217,6 +217,15 @@
       "check": { "host": "minecraft.dataknife.net", "port": 19132 }
     },
     {
+      "name": "Terraria",
+      "kind": "gameserver",
+      "description": "Terraria dedicated server via TShock (world main).",
+      "admin": "https://github.com/DataKnifeAI/terraria-operator",
+      "favicon": "assets/icons/terraria-favicon.png",
+      "vendor": "assets/icons/terraria-vendor.svg",
+      "check": { "host": "terraria.dataknife.net", "port": 7777 }
+    },
+    {
       "name": "iDRAC 01",
       "kind": "outofband",
       "description": "Dell iDRAC out-of-band.",

@@ -420,6 +420,20 @@
           "favicon": "assets/icons/minecraft-favicon.png",
           "vendor": "assets/icons/minecraft-vendor.svg",
           "statusName": "Minecraft"
+        },
+        {
+          "name": "Terraria",
+          "blurb": "Terraria dedicated world via TShock (main).",
+          "help": "Multiplayer → Join via IP → enter terraria.dataknife.net:7777. Steam or standalone Terraria client; version must match the server (currently 1.4.5.x / TShock). No join password. REST admin API is cluster-only (not public).",
+          "join": "terraria.dataknife.net:7777 (TCP)",
+          "adminDetail": "Operator: github.com/DataKnifeAI/terraria-operator · world main · VIP 192.168.14.191",
+          "url": "https://github.com/DataKnifeAI/terraria-operator",
+          "linkLabel": "Operator docs",
+          "audience": "everyone",
+          "category": "Game server",
+          "favicon": "assets/icons/terraria-favicon.png",
+          "vendor": "assets/icons/terraria-vendor.svg",
+          "statusName": "Terraria"
         }
       ]
     },
